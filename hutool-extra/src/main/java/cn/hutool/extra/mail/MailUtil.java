@@ -3,6 +3,7 @@ package cn.hutool.extra.mail;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.map.MapUtil;
+import cn.hutool.core.util.CharUtil;
 import cn.hutool.core.util.StrUtil;
 
 import javax.mail.Authenticator;
@@ -344,7 +345,7 @@ public class MailUtil {
 	 * @since 4.6.3
 	 */
 	public static String send(MailAccount mailAccount, Collection<String> tos, Collection<String> ccs, Collection<String> bccs, String subject, String content, Map<String, InputStream> imageMap,
-	                          boolean isHtml, File... files) {
+							  boolean isHtml, File... files) {
 		return send(mailAccount, false, tos, ccs, bccs, subject, content, imageMap, isHtml, files);
 	}
 
@@ -356,7 +357,7 @@ public class MailUtil {
 	 * @return {@link Session}
 	 * @since 5.5.7
 	 */
-	public static Session getSession(MailAccount mailAccount, boolean isSingleton){
+	public static Session getSession(MailAccount mailAccount, boolean isSingleton) {
 		Authenticator authenticator = null;
 		if (mailAccount.isAuth()) {
 			authenticator = new UserPassAuthenticator(mailAccount.getUser(), mailAccount.getPass());
@@ -385,7 +386,7 @@ public class MailUtil {
 	 * @since 4.6.3
 	 */
 	private static String send(MailAccount mailAccount, boolean useGlobalSession, Collection<String> tos, Collection<String> ccs, Collection<String> bccs, String subject, String content,
-	                           Map<String, InputStream> imageMap, boolean isHtml, File... files) {
+							   Map<String, InputStream> imageMap, boolean isHtml, File... files) {
 		final Mail mail = Mail.create(mailAccount).setUseGlobalSession(useGlobalSession);
 
 		// 可选抄送人
@@ -427,8 +428,8 @@ public class MailUtil {
 		}
 
 		List<String> result;
-		if (StrUtil.contains(addresses, ',')) {
-			result = StrUtil.splitTrim(addresses, ',');
+		if (StrUtil.contains(addresses, CharUtil.COMMA)) {
+			result = StrUtil.splitTrim(addresses, CharUtil.COMMA);
 		} else if (StrUtil.contains(addresses, ';')) {
 			result = StrUtil.splitTrim(addresses, ';');
 		} else {

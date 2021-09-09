@@ -2,6 +2,7 @@ package cn.hutool.core.util;
 
 import cn.hutool.core.exceptions.UtilException;
 import cn.hutool.core.lang.Assert;
+import cn.hutool.core.math.Calculator;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -134,11 +135,11 @@ public class NumberUtil {
 		}
 
 		Number value = values[0];
-		BigDecimal result = null == value ? BigDecimal.ZERO : new BigDecimal(value.toString());
+		BigDecimal result = toBigDecimal(value);
 		for (int i = 1; i < values.length; i++) {
 			value = values[i];
 			if (null != value) {
-				result = result.add(new BigDecimal(value.toString()));
+				result = result.add(toBigDecimal(value));
 			}
 		}
 		return result;
@@ -158,11 +159,11 @@ public class NumberUtil {
 		}
 
 		String value = values[0];
-		BigDecimal result = null == value ? BigDecimal.ZERO : new BigDecimal(value);
+		BigDecimal result = toBigDecimal(value);
 		for (int i = 1; i < values.length; i++) {
 			value = values[i];
-			if (null != value) {
-				result = result.add(new BigDecimal(value));
+			if (StrUtil.isNotBlank(value)) {
+				result = result.add(toBigDecimal(value));
 			}
 		}
 		return result;
@@ -182,7 +183,7 @@ public class NumberUtil {
 		}
 
 		BigDecimal value = values[0];
-		BigDecimal result = null == value ? BigDecimal.ZERO : value;
+		BigDecimal result = toBigDecimal(value);
 		for (int i = 1; i < values.length; i++) {
 			value = values[i];
 			if (null != value) {
@@ -274,11 +275,11 @@ public class NumberUtil {
 		}
 
 		Number value = values[0];
-		BigDecimal result = null == value ? BigDecimal.ZERO : new BigDecimal(value.toString());
+		BigDecimal result = toBigDecimal(value);
 		for (int i = 1; i < values.length; i++) {
 			value = values[i];
 			if (null != value) {
-				result = result.subtract(new BigDecimal(value.toString()));
+				result = result.subtract(toBigDecimal(value));
 			}
 		}
 		return result;
@@ -298,11 +299,11 @@ public class NumberUtil {
 		}
 
 		String value = values[0];
-		BigDecimal result = null == value ? BigDecimal.ZERO : new BigDecimal(value);
+		BigDecimal result = toBigDecimal(value);
 		for (int i = 1; i < values.length; i++) {
 			value = values[i];
-			if (null != value) {
-				result = result.subtract(new BigDecimal(value));
+			if (StrUtil.isNotBlank(value)) {
+				result = result.subtract(toBigDecimal(value));
 			}
 		}
 		return result;
@@ -322,7 +323,7 @@ public class NumberUtil {
 		}
 
 		BigDecimal value = values[0];
-		BigDecimal result = null == value ? BigDecimal.ZERO : value;
+		BigDecimal result = toBigDecimal(value);
 		for (int i = 1; i < values.length; i++) {
 			value = values[i];
 			if (null != value) {
@@ -729,7 +730,7 @@ public class NumberUtil {
 	 * @return 两个参数的商
 	 */
 	public static BigDecimal div(String v1, String v2, int scale, RoundingMode roundingMode) {
-		return div(new BigDecimal(v1), new BigDecimal(v2), scale, roundingMode);
+		return div(toBigDecimal(v1), toBigDecimal(v2), scale, roundingMode);
 	}
 
 	/**
@@ -1008,6 +1009,7 @@ public class NumberUtil {
 	 * @return 格式化后的值
 	 */
 	public static String decimalFormat(String pattern, double value) {
+		Assert.isTrue(isValid(value), "value is NaN or Infinite!");
 		return new DecimalFormat(pattern).format(value);
 	}
 
@@ -1054,7 +1056,38 @@ public class NumberUtil {
 	 * @since 5.1.6
 	 */
 	public static String decimalFormat(String pattern, Object value) {
-		return new DecimalFormat(pattern).format(value);
+		return decimalFormat(pattern, value, null);
+	}
+
+	/**
+	 * 格式化double<br>
+	 * 对 {@link DecimalFormat} 做封装<br>
+	 *
+	 * @param pattern      格式 格式中主要以 # 和 0 两种占位符号来指定数字长度。0 表示如果位数不足则以 0 填充，# 表示只要有可能就把数字拉上这个位置。<br>
+	 *                     <ul>
+	 *                     <li>0 =》 取一位整数</li>
+	 *                     <li>0.00 =》 取一位整数和两位小数</li>
+	 *                     <li>00.000 =》 取两位整数和三位小数</li>
+	 *                     <li># =》 取所有整数部分</li>
+	 *                     <li>#.##% =》 以百分比方式计数，并取两位小数</li>
+	 *                     <li>#.#####E0 =》 显示为科学计数法，并取五位小数</li>
+	 *                     <li>,### =》 每三位以逗号进行分隔，例如：299,792,458</li>
+	 *                     <li>光速大小为每秒,###米 =》 将格式嵌入文本</li>
+	 *                     </ul>
+	 * @param value        值，支持BigDecimal、BigInteger、Number等类型
+	 * @param roundingMode 保留小数的方式枚举
+	 * @return 格式化后的值
+	 * @since 5.6.5
+	 */
+	public static String decimalFormat(String pattern, Object value, RoundingMode roundingMode) {
+		if (value instanceof Number) {
+			Assert.isTrue(isValidNumber((Number) value), "value is NaN or Infinite!");
+		}
+		final DecimalFormat decimalFormat = new DecimalFormat(pattern);
+		if (null != roundingMode) {
+			decimalFormat.setRoundingMode(roundingMode);
+		}
+		return decimalFormat.format(value);
 	}
 
 	/**
@@ -1439,7 +1472,7 @@ public class NumberUtil {
 	 * @since 5.6.0
 	 */
 	public static BigInteger factorial(BigInteger n) {
-		if(n.equals(BigInteger.ZERO)){
+		if (n.equals(BigInteger.ZERO)) {
 			return BigInteger.ONE;
 		}
 		return factorial(n, BigInteger.ZERO);
@@ -1459,21 +1492,21 @@ public class NumberUtil {
 	public static BigInteger factorial(BigInteger start, BigInteger end) {
 		Assert.notNull(start, "Factorial start must be not null!");
 		Assert.notNull(end, "Factorial end must be not null!");
-		if(start.compareTo(BigInteger.ZERO) < 0 || end.compareTo(BigInteger.ZERO) < 0){
+		if (start.compareTo(BigInteger.ZERO) < 0 || end.compareTo(BigInteger.ZERO) < 0) {
 			throw new IllegalArgumentException(StrUtil.format("Factorial start and end both must be > 0, but got start={}, end={}", start, end));
 		}
 
-		if (start.equals(BigInteger.ZERO)){
+		if (start.equals(BigInteger.ZERO)) {
 			start = BigInteger.ONE;
 		}
 
-		if(end.compareTo(BigInteger.ONE) < 0){
+		if (end.compareTo(BigInteger.ONE) < 0) {
 			end = BigInteger.ONE;
 		}
 
 		BigInteger result = start;
 		end = end.add(BigInteger.ONE);
-		while(start.compareTo(end) > 0) {
+		while (start.compareTo(end) > 0) {
 			start = start.subtract(BigInteger.ONE);
 			result = result.multiply(start);
 		}
@@ -2083,7 +2116,7 @@ public class NumberUtil {
 	 */
 	public static String toStr(BigDecimal bigDecimal, boolean isStripTrailingZeros) {
 		Assert.notNull(bigDecimal, "BigDecimal is null !");
-		if(isStripTrailingZeros){
+		if (isStripTrailingZeros) {
 			bigDecimal = bigDecimal.stripTrailingZeros();
 		}
 		return bigDecimal.toPlainString();
@@ -2131,7 +2164,8 @@ public class NumberUtil {
 		} catch (Exception ignore) {
 			// 忽略解析错误
 		}
-		return StrUtil.isBlank(number) ? BigDecimal.ZERO : new BigDecimal(number);
+		return StrUtil.isBlank(number) ? BigDecimal.ZERO : new
+				BigDecimal(number);
 	}
 
 	/**
@@ -2166,38 +2200,6 @@ public class NumberUtil {
 	 */
 	public static BigInteger toBigInteger(String number) {
 		return StrUtil.isBlank(number) ? BigInteger.ZERO : new BigInteger(number);
-	}
-
-	/**
-	 * 是否空白符<br>
-	 * 空白符包括空格、制表符、全角空格和不间断空格<br>
-	 *
-	 * @param c 字符
-	 * @return 是否空白符
-	 * @see Character#isWhitespace(int)
-	 * @see Character#isSpaceChar(int)
-	 * @since 3.0.6
-	 * @deprecated 请使用{@link CharUtil#isBlankChar(char)}
-	 */
-	@Deprecated
-	public static boolean isBlankChar(char c) {
-		return isBlankChar((int) c);
-	}
-
-	/**
-	 * 是否空白符<br>
-	 * 空白符包括空格、制表符、全角空格和不间断空格<br>
-	 *
-	 * @param c 字符
-	 * @return 是否空白符
-	 * @see Character#isWhitespace(int)
-	 * @see Character#isSpaceChar(int)
-	 * @since 3.0.6
-	 * @deprecated 请使用{@link CharUtil#isBlankChar(int)}
-	 */
-	@Deprecated
-	public static boolean isBlankChar(int c) {
-		return Character.isWhitespace(c) || Character.isSpaceChar(c) || c == '\ufeff' || c == '\u202a';
 	}
 
 	/**
@@ -2630,6 +2632,61 @@ public class NumberUtil {
 			return (false == ((Float) number).isInfinite()) && (false == ((Float) number).isNaN());
 		}
 		return true;
+	}
+
+	/**
+	 * 检查是否为有效的数字<br>
+	 * 检查double否为无限大，或者Not a Number（NaN）<br>
+	 *
+	 * @param number 被检查double
+	 * @return 检查结果
+	 * @since 5.7.0
+	 */
+	public static boolean isValid(double number) {
+		return false == (Double.isNaN(number) || Double.isInfinite(number));
+	}
+
+	/**
+	 * 检查是否为有效的数字<br>
+	 * 检查double否为无限大，或者Not a Number（NaN）<br>
+	 *
+	 * @param number 被检查double
+	 * @return 检查结果
+	 * @since 5.7.0
+	 */
+	public static boolean isValid(float number) {
+		return false == (Float.isNaN(number) || Float.isInfinite(number));
+	}
+
+	/**
+	 * 计算数学表达式的值，只支持加减乘除和取余<br>
+	 * 如：
+	 * <pre class="code">
+	 *   calculate("(0*1--3)-5/-4-(3*(-2.13))") -》 10.64
+	 * </pre>
+	 *
+	 * @param expression 数学表达式
+	 * @return 结果
+	 * @since 5.7.6
+	 */
+	public static double calculate(String expression) {
+		return Calculator.conversion(expression);
+	}
+
+	/**
+	 * Number值转换为double<br>
+	 * float强制转换存在精度问题，此方法避免精度丢失
+	 *
+	 * @param value 被转换的float值
+	 * @return double值
+	 * @since 5.7.8
+	 */
+	public static double toDouble(Number value) {
+		if(value instanceof Float){
+			return Double.parseDouble(value.toString());
+		}else{
+			return value.doubleValue();
+		}
 	}
 
 	// ------------------------------------------------------------------------------------------- Private method start

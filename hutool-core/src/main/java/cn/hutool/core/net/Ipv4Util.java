@@ -56,11 +56,11 @@ public class Ipv4Util {
 	public static List<String> list(String ipRange, boolean isAll) {
 		if (ipRange.contains(IP_SPLIT_MARK)) {
 			// X.X.X.X-X.X.X.X
-			final String[] range = StrUtil.split(ipRange, IP_SPLIT_MARK);
+			final String[] range = StrUtil.splitToArray(ipRange, IP_SPLIT_MARK);
 			return list(range[0], range[1]);
 		} else if (ipRange.contains(IP_MASK_SPLIT_MARK)) {
 			// X.X.X.X/X
-			final String[] param = StrUtil.split(ipRange, IP_MASK_SPLIT_MARK);
+			final String[] param = StrUtil.splitToArray(ipRange, IP_MASK_SPLIT_MARK);
 			return list(param[0], Integer.parseInt(param[1]), isAll);
 		} else {
 			return ListUtil.toList(ipRange);
@@ -148,7 +148,7 @@ public class Ipv4Util {
 
 	/**
 	 * 根据ip地址(xxx.xxx.xxx.xxx)计算出long型的数据
-	 *
+	 * 方法别名：inet_aton
 	 * @param strIP IP V4 地址
 	 * @return long值
 	 */
@@ -160,7 +160,7 @@ public class Ipv4Util {
 
 	/**
 	 * 根据 ip/掩码位 计算IP段的起始IP（字符串型）
-	 *
+	 * 方法别名：inet_ntoa
 	 * @param ip      给定的IP，如218.240.38.69
 	 * @param maskBit 给定的掩码位，如30
 	 * @return 起始IP的字符串表示
@@ -194,28 +194,18 @@ public class Ipv4Util {
 	/**
 	 * 根据子网掩码转换为掩码位
 	 *
-	 * @param mask 掩码，例如xxx.xxx.xxx.xxx
-	 * @return 掩码位，例如32
+	 * @param mask 掩码的点分十进制表示，例如 255.255.255.0
+	 *
+	 * @return 掩码位，例如 24
+	 *
+	 * @throws IllegalArgumentException 子网掩码非法
 	 */
 	public static int getMaskBitByMask(String mask) {
-		StringBuffer sbf;
-		String str;
-		int inetmask = 0;
-		int count;
-		for (String part : StrUtil.split(mask, CharUtil.DOT)) {
-			sbf = toBin(Integer.parseInt(part));
-			str = sbf.reverse().toString();
-			count = 0;
-			for (int i = 0; i < str.length(); i++) {
-				i = str.indexOf('1', i);
-				if (i == -1) {
-					break;
-				}
-				count++;
-			}
-			inetmask += count;
+		Integer maskBit = MaskBit.getMaskBit(mask);
+		if (maskBit == null) {
+			throw new IllegalArgumentException("Invalid netmask " + mask);
 		}
-		return inetmask;
+		return maskBit;
 	}
 
 	/**
@@ -288,6 +278,29 @@ public class Ipv4Util {
 		return count;
 	}
 
+	/**
+	 * 判断掩码是否合法
+	 *
+	 * @param mask 掩码的点分十进制表示，例如 255.255.255.0
+	 *
+	 * @return true：掩码合法；false：掩码不合法
+	 */
+	public static boolean isMaskValid(String mask) {
+		return MaskBit.getMaskBit(mask) != null;
+	}
+
+	/**
+	 * 判断掩码位是否合法
+	 *
+	 * @param maskBit 掩码位，例如 24
+	 *
+	 * @return true：掩码位合法；false：掩码位不合法
+	 */
+	public static boolean isMaskBitValid(int maskBit) {
+		return MaskBit.get(maskBit) != null;
+	}
+
+
 	//-------------------------------------------------------------------------------- Private method start
 
 	/**
@@ -301,17 +314,6 @@ public class Ipv4Util {
 	private static Long getEndIpLong(String ip, int maskBit) {
 		return getBeginIpLong(ip, maskBit)
 				+ ~ipv4ToLong(getMaskByMaskBit(maskBit));
-	}
-
-	private static StringBuffer toBin(int x) {
-		StringBuffer result = new StringBuffer();
-		result.append(x % 2);
-		x /= 2;
-		while (x > 0) {
-			result.append(x % 2);
-			x /= 2;
-		}
-		return result;
 	}
 	//-------------------------------------------------------------------------------- Private method end
 }

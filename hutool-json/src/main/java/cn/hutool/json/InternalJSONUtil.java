@@ -1,86 +1,26 @@
 package cn.hutool.json;
 
 import cn.hutool.core.convert.Convert;
-import cn.hutool.core.date.DateUtil;
-import cn.hutool.core.date.TemporalAccessorUtil;
+import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.CharUtil;
 import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 
-import java.io.IOException;
-import java.io.Writer;
 import java.math.BigDecimal;
-import java.time.temporal.TemporalAccessor;
-import java.util.Calendar;
 import java.util.Collection;
-import java.util.Date;
-import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.SortedMap;
 
 /**
  * 内部JSON工具类，仅用于JSON内部使用
  *
  * @author Looly
  */
-final class InternalJSONUtil {
+public final class InternalJSONUtil {
 
 	private InternalJSONUtil() {
-	}
-
-	/**
-	 * 写入值到Writer
-	 *
-	 * @param writer       Writer
-	 * @param value        值
-	 * @param indentFactor 缩进因子，定义每一级别增加的缩进量
-	 * @param indent       缩进空格数
-	 * @param config       配置项
-	 * @return Writer
-	 * @throws JSONException JSON异常
-	 * @throws IOException   IO异常
-	 */
-	protected static Writer writeValue(Writer writer, Object value, int indentFactor, int indent, JSONConfig config) throws JSONException, IOException {
-		if (value == null || value instanceof JSONNull) {
-			writer.write(JSONNull.NULL.toString());
-		} else if (value instanceof JSON) {
-			((JSON) value).write(writer, indentFactor, indent);
-		} else if (value instanceof Map) {
-			new JSONObject(value).write(writer, indentFactor, indent);
-		} else if (value instanceof Iterable || value instanceof Iterator || value.getClass().isArray()) {
-			new JSONArray(value).write(writer, indentFactor, indent);
-		} else if (value instanceof Number) {
-			writer.write(NumberUtil.toStr((Number) value));
-		} else if (value instanceof Date || value instanceof Calendar || value instanceof TemporalAccessor) {
-			final String format = (null == config) ? null : config.getDateFormat();
-			writer.write(formatDate(value, format));
-		} else if (value instanceof Boolean) {
-			writer.write(value.toString());
-		} else if (value instanceof JSONString) {
-			String valueStr;
-			try {
-				valueStr = ((JSONString) value).toJSONString();
-			} catch (Exception e) {
-				throw new JSONException(e);
-			}
-			writer.write(valueStr != null ? valueStr : JSONUtil.quote(value.toString()));
-		} else {
-			JSONUtil.quote(value.toString(), writer);
-		}
-		return writer;
-	}
-
-	/**
-	 * 缩进，使用空格符
-	 *
-	 * @param writer writer
-	 * @param indent 缩进空格数
-	 * @throws IOException IO异常
-	 */
-	protected static void indent(Writer writer, int indent) throws IOException {
-		for (int i = 0; i < indent; i += 1) {
-			writer.write(CharUtil.SPACE);
-		}
 	}
 
 	/**
@@ -89,27 +29,30 @@ final class InternalJSONUtil {
 	 * @param obj 被检查的对象
 	 * @throws JSONException If o is a non-finite number.
 	 */
-	protected static void testValidity(Object obj) throws JSONException {
+	static void testValidity(Object obj) throws JSONException {
 		if (false == ObjectUtil.isValidIfNumber(obj)) {
 			throw new JSONException("JSON does not allow non-finite numbers.");
 		}
 	}
 
 	/**
-	 * 值转为String，用于JSON中。 If the object has an value.toJSONString() method, then that method will be used to produce the JSON text. <br>
-	 * The method is required to produce a strictly conforming text. <br>
-	 * If the object does not contain a toJSONString method (which is the most common case), then a text will be produced by other means. <br>
-	 * If the value is an array or Collection, then a JSONArray will be made from it and its toJSONString method will be called. <br>
-	 * If the value is a MAP, then a JSONObject will be made from it and its toJSONString method will be called. <br>
-	 * Otherwise, the value's toString method will be called, and the result will be quoted.<br>
+	 * 值转为String，用于JSON中。规则为：
+	 * <ul>
+	 *     <li>对象如果实现了{@link JSONString}接口，调用{@link JSONString#toJSONString()}方法</li>
+	 *     <li>对象如果实现了{@link JSONString}接口，调用{@link JSONString#toJSONString()}方法</li>
+	 *     <li>对象如果是数组或Collection，包装为{@link JSONArray}</li>
+	 *     <li>对象如果是Map，包装为{@link JSONObject}</li>
+	 *     <li>对象如果是数字，使用{@link NumberUtil#toStr(Number)}转换为字符串</li>
+	 *     <li>其他情况调用toString并使用双引号包装</li>
+	 * </ul>
 	 *
 	 * @param value 需要转为字符串的对象
 	 * @return 字符串
 	 * @throws JSONException If the value is or contains an invalid number.
 	 */
-	protected static String valueToString(Object value) throws JSONException {
+	static String valueToString(Object value) throws JSONException {
 		if (value == null || value instanceof JSONNull) {
-			return "null";
+			return JSONNull.NULL.toString();
 		}
 		if (value instanceof JSONString) {
 			try {
@@ -127,7 +70,7 @@ final class InternalJSONUtil {
 		} else if (value instanceof Collection) {
 			Collection<?> coll = (Collection<?>) value;
 			return new JSONArray(coll).toString();
-		} else if (value.getClass().isArray()) {
+		} else if (ArrayUtil.isArray(value)) {
 			return new JSONArray(value).toString();
 		} else {
 			return JSONUtil.quote(value.toString());
@@ -140,16 +83,13 @@ final class InternalJSONUtil {
 	 * @param string A String.
 	 * @return A simple JSON value.
 	 */
-	protected static Object stringToValue(String string) {
+	public static Object stringToValue(String string) {
 		// null处理
-		if (null == string || "null".equalsIgnoreCase(string)) {
+		if (StrUtil.isEmpty(string) || StrUtil.NULL.equalsIgnoreCase(string)) {
 			return JSONNull.NULL;
 		}
 
 		// boolean处理
-		if (0 == string.length()) {
-			return StrUtil.EMPTY;
-		}
 		if ("true".equalsIgnoreCase(string)) {
 			return Boolean.TRUE;
 		}
@@ -163,10 +103,6 @@ final class InternalJSONUtil {
 			try {
 				if (StrUtil.containsAnyIgnoreCase(string, ".", "e")) {
 					// pr#192@Gitee，Double会出现小数精度丢失问题，此处使用BigDecimal
-					//double d = Double.parseDouble(string);
-					//if (false == Double.isInfinite(d) && false == Double.isNaN(d)) {
-					//	return d;
-					//}
 					return new BigDecimal(string);
 				} else {
 					final long myLong = Long.parseLong(string);
@@ -195,8 +131,8 @@ final class InternalJSONUtil {
 	 * @param value      值
 	 * @return JSONObject
 	 */
-	protected static JSONObject propertyPut(JSONObject jsonObject, Object key, Object value) {
-		final String[] path = StrUtil.split(Convert.toStr(key), StrUtil.DOT);
+	static JSONObject propertyPut(JSONObject jsonObject, Object key, Object value) {
+		final String[] path = StrUtil.splitToArray(Convert.toStr(key), CharUtil.DOT);
 		int last = path.length - 1;
 		JSONObject target = jsonObject;
 		for (int i = 0; i < last; i += 1) {
@@ -225,42 +161,34 @@ final class InternalJSONUtil {
 	 * @return 是否忽略null值
 	 * @since 4.3.1
 	 */
-	protected static boolean defaultIgnoreNullValue(Object obj) {
+	static boolean defaultIgnoreNullValue(Object obj) {
 		return (false == (obj instanceof CharSequence))//
 				&& (false == (obj instanceof JSONTokener))//
 				&& (false == (obj instanceof Map));
 	}
 
 	/**
-	 * 按照给定格式格式化日期，格式为空时返回时间戳字符串
+	 * 判断给定对象是否有序，用于辅助创建{@link JSONObject}时是否有序
 	 *
-	 * @param dateObj Date或者Calendar对象
-	 * @param format  格式
-	 * @return 日期字符串
+	 * <ul>
+	 *     <li>对象为{@link LinkedHashMap}子类或{@link LinkedHashMap}子类</li>
+	 *     <li>对象实现</li>
+	 * </ul>
+	 *
+	 * @param value 被转换的对象
+	 * @return 是否有序
+	 * @since 5.7.0
 	 */
-	private static String formatDate(Object dateObj, String format) {
-		if (StrUtil.isNotBlank(format)) {
-			final String dateStr;
-			if(dateObj instanceof TemporalAccessor){
-				dateStr = TemporalAccessorUtil.format((TemporalAccessor) dateObj, format);
-			} else{
-				dateStr = DateUtil.format(Convert.toDate(dateObj), format);
+	static boolean isOrder(Object value) {
+		if (value instanceof LinkedHashMap || value instanceof SortedMap) {
+			return true;
+		} else if (value instanceof JSONGetter) {
+			final JSONConfig config = ((JSONGetter<?>) value).getConfig();
+			if (null != config) {
+				return config.isOrder();
 			}
-			//用户定义了日期格式
-			return JSONUtil.quote(dateStr);
 		}
 
-		//默认使用时间戳
-		long timeMillis;
-		if (dateObj instanceof TemporalAccessor) {
-			timeMillis = TemporalAccessorUtil.toEpochMilli((TemporalAccessor) dateObj);
-		} else if (dateObj instanceof Date) {
-			timeMillis = ((Date) dateObj).getTime();
-		} else if (dateObj instanceof Calendar) {
-			timeMillis = ((Calendar) dateObj).getTimeInMillis();
-		} else {
-			throw new UnsupportedOperationException("Unsupported Date type: " + dateObj.getClass());
-		}
-		return String.valueOf(timeMillis);
+		return false;
 	}
 }

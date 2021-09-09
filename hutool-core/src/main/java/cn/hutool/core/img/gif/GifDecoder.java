@@ -38,7 +38,6 @@ import java.util.ArrayList;
  * 来自：https://github.com/rtyley/animated-gif-lib-for-java
  *
  * @author Kevin Weiner, FM Software; LZW decoder adapted from John Cristy's ImageMagick.
- * @version 1.03 November 2003
  */
 public class GifDecoder {
 
@@ -778,9 +777,6 @@ public class GifDecoder {
 		lastRect = new Rectangle(ix, iy, iw, ih);
 		lastImage = image;
 		lastBgColor = bgColor;
-		int dispose = 0;
-		boolean transparency = false;
-		int delay = 0;
 		lct = null;
 	}
 

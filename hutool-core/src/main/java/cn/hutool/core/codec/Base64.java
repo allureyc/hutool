@@ -200,6 +200,20 @@ public class Base64 {
 	}
 
 	/**
+	 * 编码为Base64字符串<br>
+	 * 如果isMultiLine为{@code true}，则每76个字符一个换行符，否则在一行显示
+	 *
+	 * @param arr         被编码的数组
+	 * @param isMultiLine 在76个char之后是CRLF还是EOF
+	 * @param isUrlSafe   是否使用URL安全字符，一般为{@code false}
+	 * @return 编码后的bytes
+	 * @since 5.7.2
+	 */
+	public static String encodeStr(byte[] arr, boolean isMultiLine, boolean isUrlSafe) {
+		return Base64Encoder.encodeStr(arr, isMultiLine, isUrlSafe);
+	}
+
+	/**
 	 * 编码为Base64<br>
 	 * 如果isMultiLine为{@code true}，则每76个字符一个换行符，否则在一行显示
 	 *
@@ -292,32 +306,6 @@ public class Base64 {
 	}
 
 	/**
-	 * base64解码
-	 *
-	 * @param source  被解码的base64字符串
-	 * @param charset 字符集
-	 * @return 被加密后的字符串
-	 * @deprecated 编码参数无意义，作废
-	 */
-	@Deprecated
-	public static byte[] decode(CharSequence source, String charset) {
-		return Base64Decoder.decode(source);
-	}
-
-	/**
-	 * base64解码
-	 *
-	 * @param source  被解码的base64字符串
-	 * @param charset 字符集
-	 * @return 被加密后的字符串
-	 * @deprecated 编码参数无意义，作废
-	 */
-	@Deprecated
-	public static byte[] decode(CharSequence source, Charset charset) {
-		return Base64Decoder.decode(source);
-	}
-
-	/**
 	 * 解码Base64
 	 *
 	 * @param in 输入
@@ -325,5 +313,54 @@ public class Base64 {
 	 */
 	public static byte[] decode(byte[] in) {
 		return Base64Decoder.decode(in);
+	}
+
+	/**
+	 * 检查是否为Base64
+	 *
+	 * @param base64 Base64的bytes
+	 * @return 是否为Base64
+	 * @since 5.7.5
+	 */
+	public static boolean isBase64(CharSequence base64){
+		return isBase64(StrUtil.utf8Bytes(base64));
+	}
+
+	/**
+	 * 检查是否为Base64
+	 *
+	 * @param base64Bytes Base64的bytes
+	 * @return 是否为Base64
+	 * @since 5.7.5
+	 */
+	public static boolean isBase64(byte[] base64Bytes){
+		boolean hasPadding = false;
+		for (byte base64Byte : base64Bytes) {
+			if(hasPadding){
+				if('=' != base64Byte){
+					// 前一个字符是'='，则后边的字符都必须是'='，即'='只能都位于结尾
+					return false;
+				}
+			} else if('=' == base64Byte){
+				// 发现'=' 标记之
+				hasPadding = true;
+			}
+			if (false == (Base64Decoder.isBase64Code(base64Byte) || isWhiteSpace(base64Byte))) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	private static boolean isWhiteSpace(byte byteToCheck) {
+		switch (byteToCheck) {
+			case ' ' :
+			case '\n' :
+			case '\r' :
+			case '\t' :
+				return true;
+			default :
+				return false;
+		}
 	}
 }

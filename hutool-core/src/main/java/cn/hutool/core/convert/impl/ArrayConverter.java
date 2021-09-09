@@ -4,6 +4,8 @@ import cn.hutool.core.collection.IterUtil;
 import cn.hutool.core.convert.AbstractConverter;
 import cn.hutool.core.convert.Convert;
 import cn.hutool.core.util.ArrayUtil;
+import cn.hutool.core.util.ByteUtil;
+import cn.hutool.core.util.CharUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 
@@ -123,7 +125,7 @@ public class ArrayConverter extends AbstractConverter<Object> {
 			}
 
 			// 单纯字符串情况下按照逗号分隔后劈开
-			final String[] strings = StrUtil.split(value.toString(), StrUtil.COMMA);
+			final String[] strings = StrUtil.splitToArray(value.toString(), CharUtil.COMMA);
 			return convertArrayToArray(strings);
 		}
 
@@ -159,6 +161,9 @@ public class ArrayConverter extends AbstractConverter<Object> {
 			for (int i = 0; i < list.size(); i++) {
 				Array.set(result, i, convertComponentType(list.get(i)));
 			}
+		}else if (value instanceof Number && byte.class == targetComponentType) {
+			// 用户可能想序列化指定对象
+			result = ByteUtil.numberToBytes((Number)value);
 		} else if (value instanceof Serializable && byte.class == targetComponentType) {
 			// 用户可能想序列化指定对象
 			result = ObjectUtil.serialize(value);

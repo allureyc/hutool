@@ -39,7 +39,7 @@ public class FileTypeUtil {
 		FILE_TYPE_MAP.put("4749463839", "gif"); // GIF (gif)
 		FILE_TYPE_MAP.put("49492a00227105008037", "tif"); // TIFF (tif)
 		FILE_TYPE_MAP.put("424d228c010000000000", "bmp"); // 16色位图(bmp)
-		FILE_TYPE_MAP.put("424d8240090000000000", "bmp"); // 24位位图(bmp)
+		FILE_TYPE_MAP.put("424d8240090000000000", "bmp"); // 24色位图(bmp)
 		FILE_TYPE_MAP.put("424d8e1b030000000000", "bmp"); // 256色位图(bmp)
 		FILE_TYPE_MAP.put("41433130313500000000", "dwg"); // CAD (dwg)
 		FILE_TYPE_MAP.put("7b5c727466315c616e73", "rtf"); // Rich Text Format (rtf)
@@ -50,6 +50,7 @@ public class FileTypeUtil {
 		FILE_TYPE_MAP.put("255044462d312e", "pdf"); // Adobe Acrobat (pdf)
 		FILE_TYPE_MAP.put("2e524d46000000120001", "rmvb"); // rmvb/rm相同
 		FILE_TYPE_MAP.put("464c5601050000000900", "flv"); // flv与f4v相同
+		FILE_TYPE_MAP.put("0000001C66747970", "mp4");
 		FILE_TYPE_MAP.put("00000020667479706", "mp4");
 		FILE_TYPE_MAP.put("00000018667479706D70", "mp4");
 		FILE_TYPE_MAP.put("49443303000000002176", "mp3");
@@ -60,7 +61,6 @@ public class FileTypeUtil {
 		FILE_TYPE_MAP.put("4d546864000000060001", "mid"); // MIDI (mid)
 		FILE_TYPE_MAP.put("526172211a0700cf9073", "rar"); // WinRAR
 		FILE_TYPE_MAP.put("235468697320636f6e66", "ini");
-		FILE_TYPE_MAP.put("504B0304140000000800", "ofd"); // ofd文件 国标版式文件
 		FILE_TYPE_MAP.put("504B03040a0000000000", "jar");
 		FILE_TYPE_MAP.put("504B0304140008000800", "jar");
 		// MS Excel 注意：word、msi 和 excel的文件头一样
@@ -140,7 +140,7 @@ public class FileTypeUtil {
 	 * <pre>
 	 *     1、无法识别类型默认按照扩展名识别
 	 *     2、xls、doc、msi头信息无法区分，按照扩展名区分
-	 *     3、zip可能为docx、xlsx、pptx、jar、war头信息无法区分，按照扩展名区分
+	 *     3、zip可能为docx、xlsx、pptx、jar、war、ofd头信息无法区分，按照扩展名区分
 	 * </pre>
 	 * @param in {@link InputStream}
 	 * @param filename 文件名
@@ -162,7 +162,7 @@ public class FileTypeUtil {
 				typeName = "msi";
 			}
 		} else if ("zip".equals(typeName)) {
-			// zip可能为docx、xlsx、pptx、jar、war等格式，扩展名辅助判断
+			// zip可能为docx、xlsx、pptx、jar、war、ofd等格式，扩展名辅助判断
 			final String extName = FileUtil.extName(filename);
 			if ("docx".equalsIgnoreCase(extName)) {
 				typeName = "docx";
@@ -174,6 +174,17 @@ public class FileTypeUtil {
 				typeName = "jar";
 			} else if ("war".equalsIgnoreCase(extName)) {
 				typeName = "war";
+			} else if ("ofd".equalsIgnoreCase(extName)) {
+				typeName = "ofd";
+			}
+		} else if ("jar".equals(typeName)) {
+			// wps编辑过的.xlsx文件与.jar的开头相同,通过扩展名判断
+			final String extName = FileUtil.extName(filename);
+			if ("xlsx".equalsIgnoreCase(extName)) {
+				typeName = "xlsx";
+			} else if ("docx".equalsIgnoreCase(extName)) {
+				// issue#I47JGH
+				typeName = "docx";
 			}
 		}
 		return typeName;

@@ -1,9 +1,9 @@
 package cn.hutool.http.useragent;
 
+import cn.hutool.core.collection.CollUtil;
+
 import java.util.ArrayList;
 import java.util.List;
-
-import cn.hutool.core.collection.CollUtil;
 
 /**
  * 平台对象
@@ -12,6 +12,7 @@ import cn.hutool.core.collection.CollUtil;
  * @since 4.2.1
  */
 public class Platform extends UserAgentInfo {
+	private static final long serialVersionUID = 1L;
 
 	/**
 	 * 未知
@@ -109,7 +110,7 @@ public class Platform extends UserAgentInfo {
 	 * @since 5.2.3
 	 */
 	public boolean isIPhoneOrIPod() {
-		return IPHONE.equals(this) || IPOD.equals(this);
+		return this.equals(IPHONE) || this.equals(IPOD);
 	}
 
 	/**
@@ -119,7 +120,7 @@ public class Platform extends UserAgentInfo {
 	 * @since 5.2.3
 	 */
 	public boolean isIPad() {
-		return IPAD.equals(this);
+		return this.equals(IPAD);
 	}
 
 	/**
@@ -139,7 +140,7 @@ public class Platform extends UserAgentInfo {
 	 * @since 5.2.3
 	 */
 	public boolean isAndroid() {
-		return ANDROID.equals(this) || GOOGLE_TV.equals(this);
+		return this.equals(ANDROID) || this.equals(GOOGLE_TV);
 	}
 
 }

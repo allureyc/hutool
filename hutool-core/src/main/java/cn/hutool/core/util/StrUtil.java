@@ -2,6 +2,8 @@ package cn.hutool.core.util;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.text.StrBuilder;
+import cn.hutool.core.text.StrFormatter;
+import cn.hutool.core.text.StrPool;
 import cn.hutool.core.text.TextSimilarity;
 
 import java.io.StringReader;
@@ -15,207 +17,7 @@ import java.util.Map;
  *
  * @author xiaoleilu
  */
-public class StrUtil extends CharSequenceUtil {
-
-	/**
-	 * 字符常量：空格符 {@code ' '}
-	 */
-	public static final char C_SPACE = CharUtil.SPACE;
-
-	/**
-	 * 字符常量：制表符 {@code '\t'}
-	 */
-	public static final char C_TAB = CharUtil.TAB;
-
-	/**
-	 * 字符常量：点 {@code '.'}
-	 */
-	public static final char C_DOT = CharUtil.DOT;
-
-	/**
-	 * 字符常量：斜杠 {@code '/'}
-	 */
-	public static final char C_SLASH = CharUtil.SLASH;
-
-	/**
-	 * 字符常量：反斜杠 {@code '\\'}
-	 */
-	public static final char C_BACKSLASH = CharUtil.BACKSLASH;
-
-	/**
-	 * 字符常量：回车符 {@code '\r'}
-	 */
-	public static final char C_CR = CharUtil.CR;
-
-	/**
-	 * 字符常量：换行符 {@code '\n'}
-	 */
-	public static final char C_LF = CharUtil.LF;
-
-	/**
-	 * 字符常量：下划线 {@code '_'}
-	 */
-	public static final char C_UNDERLINE = CharUtil.UNDERLINE;
-
-	/**
-	 * 字符常量：逗号 {@code ','}
-	 */
-	public static final char C_COMMA = CharUtil.COMMA;
-
-	/**
-	 * 字符常量：花括号（左） <code>'{'</code>
-	 */
-	public static final char C_DELIM_START = CharUtil.DELIM_START;
-
-	/**
-	 * 字符常量：花括号（右） <code>'}'</code>
-	 */
-	public static final char C_DELIM_END = CharUtil.DELIM_END;
-
-	/**
-	 * 字符常量：中括号（左） {@code '['}
-	 */
-	public static final char C_BRACKET_START = CharUtil.BRACKET_START;
-
-	/**
-	 * 字符常量：中括号（右） {@code ']'}
-	 */
-	public static final char C_BRACKET_END = CharUtil.BRACKET_END;
-
-	/**
-	 * 字符常量：冒号 {@code ':'}
-	 */
-	public static final char C_COLON = CharUtil.COLON;
-
-	/**
-	 * 字符常量：艾特 {@code '@'}
-	 */
-	public static final char C_AT = CharUtil.AT;
-
-
-	/**
-	 * 字符串常量：制表符 {@code "\t"}
-	 */
-	public static final String TAB = "	";
-
-	/**
-	 * 字符串常量：点 {@code "."}
-	 */
-	public static final String DOT = ".";
-
-	/**
-	 * 字符串常量：双点 {@code ".."} <br>
-	 * 用途：作为指向上级文件夹的路径，如：{@code "../path"}
-	 */
-	public static final String DOUBLE_DOT = "..";
-
-	/**
-	 * 字符串常量：斜杠 {@code "/"}
-	 */
-	public static final String SLASH = "/";
-
-	/**
-	 * 字符串常量：反斜杠 {@code "\\"}
-	 */
-	public static final String BACKSLASH = "\\";
-
-	/**
-	 * 字符串常量：回车符 {@code "\r"} <br>
-	 * 解释：该字符常用于表示 Linux 系统和 MacOS 系统下的文本换行
-	 */
-	public static final String CR = "\r";
-
-	/**
-	 * 字符串常量：换行符 {@code "\n"}
-	 */
-	public static final String LF = "\n";
-
-	/**
-	 * 字符串常量：Windows 换行 {@code "\r\n"} <br>
-	 * 解释：该字符串常用于表示 Windows 系统下的文本换行
-	 */
-	public static final String CRLF = "\r\n";
-
-	/**
-	 * 字符串常量：下划线 {@code "_"}
-	 */
-	public static final String UNDERLINE = "_";
-
-	/**
-	 * 字符串常量：减号（连接符） {@code "-"}
-	 */
-	public static final String DASHED = "-";
-
-	/**
-	 * 字符串常量：逗号 {@code ","}
-	 */
-	public static final String COMMA = ",";
-
-	/**
-	 * 字符串常量：花括号（左） <code>"{"</code>
-	 */
-	public static final String DELIM_START = "{";
-
-	/**
-	 * 字符串常量：花括号（右） <code>"}"</code>
-	 */
-	public static final String DELIM_END = "}";
-
-	/**
-	 * 字符串常量：中括号（左） {@code "["}
-	 */
-	public static final String BRACKET_START = "[";
-
-	/**
-	 * 字符串常量：中括号（右） {@code "]"}
-	 */
-	public static final String BRACKET_END = "]";
-
-	/**
-	 * 字符串常量：冒号 {@code ":"}
-	 */
-	public static final String COLON = ":";
-
-	/**
-	 * 字符串常量：艾特 {@code "@"}
-	 */
-	public static final String AT = "@";
-
-
-	/**
-	 * 字符串常量：HTML 空格转义 {@code "&nbsp;" -> " "}
-	 */
-	public static final String HTML_NBSP = XmlUtil.NBSP;
-
-	/**
-	 * 字符串常量：HTML And 符转义 {@code "&amp;" -> "&"}
-	 */
-	public static final String HTML_AMP = XmlUtil.AMP;
-
-	/**
-	 * 字符串常量：HTML 双引号转义 {@code "&quot;" -> "\""}
-	 */
-	public static final String HTML_QUOTE = XmlUtil.QUOTE;
-
-	/**
-	 * 字符串常量：HTML 单引号转义 {@code "&apos" -> "'"}
-	 */
-	public static final String HTML_APOS = XmlUtil.APOS;
-
-	/**
-	 * 字符串常量：HTML 小于号转义 {@code "&lt;" -> "<"}
-	 */
-	public static final String HTML_LT = XmlUtil.LT;
-
-	/**
-	 * 字符串常量：HTML 大于号转义 {@code "&gt;" -> ">"}
-	 */
-	public static final String HTML_GT = XmlUtil.GT;
-
-	/**
-	 * 字符串常量：空 JSON {@code "{}"}
-	 */
-	public static final String EMPTY_JSON = "{}";
+public class StrUtil extends CharSequenceUtil implements StrPool {
 
 	// ------------------------------------------------------------------------ Blank
 
@@ -329,7 +131,9 @@ public class StrUtil extends CharSequenceUtil {
 	 * @param obj         对象
 	 * @param charsetName 字符集
 	 * @return 字符串
+	 * @deprecated 请使用 {@link #str(Object, Charset)}
 	 */
+	@Deprecated
 	public static String str(Object obj, String charsetName) {
 		return str(obj, Charset.forName(charsetName));
 	}
@@ -462,9 +266,10 @@ public class StrUtil extends CharSequenceUtil {
 	 * @param obj 对象
 	 * @return 字符串
 	 * @since 4.1.3
+	 * @see String#valueOf(Object)
 	 */
 	public static String toString(Object obj) {
-		return null == obj ? NULL : obj.toString();
+		return String.valueOf(obj);
 	}
 
 	/**
@@ -650,22 +455,6 @@ public class StrUtil extends CharSequenceUtil {
 	 * @since 5.4.3
 	 */
 	public static String format(CharSequence template, Map<?, ?> map, boolean ignoreNull) {
-		if (null == template) {
-			return null;
-		}
-		if (null == map || map.isEmpty()) {
-			return template.toString();
-		}
-
-		String template2 = template.toString();
-		String value;
-		for (Map.Entry<?, ?> entry : map.entrySet()) {
-			value = utf8Str(entry.getValue());
-			if (null == value && ignoreNull) {
-				continue;
-			}
-			template2 = replace(template2, "{" + entry.getKey() + "}", value);
-		}
-		return template2;
+		return StrFormatter.format(template, map, ignoreNull);
 	}
 }

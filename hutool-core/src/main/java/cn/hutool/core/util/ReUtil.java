@@ -5,6 +5,7 @@ import cn.hutool.core.convert.Convert;
 import cn.hutool.core.exceptions.UtilException;
 import cn.hutool.core.lang.Holder;
 import cn.hutool.core.lang.PatternPool;
+import cn.hutool.core.lang.RegexPool;
 import cn.hutool.core.lang.Validator;
 import cn.hutool.core.lang.func.Func1;
 
@@ -14,6 +15,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -28,11 +30,11 @@ public class ReUtil {
 	/**
 	 * 正则表达式匹配中文汉字
 	 */
-	public final static String RE_CHINESE = "[\u4E00-\u9FFF]";
+	public final static String RE_CHINESE = RegexPool.CHINESE;
 	/**
 	 * 正则表达式匹配中文字符串
 	 */
-	public final static String RE_CHINESES = RE_CHINESE + "+";
+	public final static String RE_CHINESES = RegexPool.CHINESES;
 
 	/**
 	 * 正则中需要被转义的关键字
@@ -292,11 +294,60 @@ public class ReUtil {
 	 * @return 删除后剩余的内容
 	 */
 	public static String delFirst(Pattern pattern, CharSequence content) {
-		if (null == pattern || StrUtil.isBlank(content)) {
+		return replaceFirst(pattern, content, StrUtil.EMPTY);
+	}
+
+	/**
+	 * 替换匹配的第一个内容
+	 *
+	 * @param pattern 正则
+	 * @param content 被匹配的内容
+	 * @param replacement 替换的内容
+	 * @return 替换后剩余的内容
+	 * @since 5.6.5
+	 */
+	public static String replaceFirst(Pattern pattern, CharSequence content, String replacement) {
+		if (null == pattern || StrUtil.isEmpty(content)) {
 			return StrUtil.str(content);
 		}
 
-		return pattern.matcher(content).replaceFirst(StrUtil.EMPTY);
+		return pattern.matcher(content).replaceFirst(replacement);
+	}
+
+	/**
+	 * 删除匹配的最后一个内容
+	 *
+	 * @param regex 正则
+	 * @param str   被匹配的内容
+	 * @return 删除后剩余的内容
+	 * @since 5.6.5
+	 */
+	public static String delLast(String regex, CharSequence str) {
+		if (StrUtil.hasBlank(regex, str)) {
+			return StrUtil.str(str);
+		}
+
+		final Pattern pattern = PatternPool.get(regex, Pattern.DOTALL);
+		return delLast(pattern, str);
+	}
+
+	/**
+	 * 删除匹配的最后一个内容
+	 *
+	 * @param pattern 正则
+	 * @param str     被匹配的内容
+	 * @return 删除后剩余的内容
+	 * @since 5.6.5
+	 */
+	public static String delLast(Pattern pattern, CharSequence str) {
+		if (null != pattern && StrUtil.isNotEmpty(str)) {
+			final MatchResult matchResult = lastIndexOf(pattern, str);
+			if(null != matchResult){
+				return StrUtil.subPre(str, matchResult.start()) + StrUtil.subSuf(str, matchResult.end());
+			}
+		}
+
+		return StrUtil.str(str);
 	}
 
 	/**
@@ -541,6 +592,79 @@ public class ReUtil {
 	}
 
 	/**
+	 * 找到指定正则匹配到字符串的开始位置
+	 *
+	 * @param regex 正则
+	 * @param content 字符串
+	 * @return 位置，{@code null}表示未找到
+	 * @since 5.6.5
+	 */
+	public static MatchResult indexOf(String regex, CharSequence content){
+		if (null == regex || null == content) {
+			return null;
+		}
+
+		final Pattern pattern = PatternPool.get(regex, Pattern.DOTALL);
+		return indexOf(pattern, content);
+	}
+
+	/**
+	 * 找到指定模式匹配到字符串的开始位置
+	 *
+	 * @param pattern 模式
+	 * @param content 字符串
+	 * @return 位置，{@code null}表示未找到
+	 * @since 5.6.5
+	 */
+	public static MatchResult indexOf(Pattern pattern, CharSequence content){
+		if(null != pattern && null != content){
+			final Matcher matcher = pattern.matcher(content);
+			if(matcher.find()){
+				return matcher.toMatchResult();
+			}
+		}
+
+		return null;
+	}
+
+	/**
+	 * 找到指定正则匹配到第一个字符串的位置
+	 *
+	 * @param regex 正则
+	 * @param content 字符串
+	 * @return 位置，{@code null}表示未找到
+	 * @since 5.6.5
+	 */
+	public static MatchResult lastIndexOf(String regex, CharSequence content){
+		if (null == regex || null == content) {
+			return null;
+		}
+
+		final Pattern pattern = PatternPool.get(regex, Pattern.DOTALL);
+		return lastIndexOf(pattern, content);
+	}
+
+	/**
+	 * 找到指定模式匹配到最后一个字符串的位置
+	 *
+	 * @param pattern 模式
+	 * @param content 字符串
+	 * @return 位置，{@code null}表示未找到
+	 * @since 5.6.5
+	 */
+	public static MatchResult lastIndexOf(Pattern pattern, CharSequence content){
+		MatchResult result = null;
+		if(null != pattern && null != content){
+			final Matcher matcher = pattern.matcher(content);
+			while(matcher.find()){
+				result = matcher.toMatchResult();
+			}
+		}
+
+		return result;
+	}
+
+	/**
 	 * 从字符串中获得第一个整数
 	 *
 	 * @param StringWithNumber 带数字的字符串
@@ -647,7 +771,13 @@ public class ReUtil {
 	}
 
 	/**
-	 * 替换所有正则匹配的文本，并使用自定义函数决定如何替换
+	 * 替换所有正则匹配的文本，并使用自定义函数决定如何替换<br>
+	 * replaceFun可以通过{@link Matcher}提取出匹配到的内容的不同部分，然后经过重新处理、组装变成新的内容放回原位。
+	 *
+	 * <pre class="code">
+	 *     replaceAll(this.content, "(\\d+)", parameters -&gt; "-" + parameters.group(1) + "-")
+	 *     // 结果为："ZZZaaabbbccc中文-1234-"
+	 * </pre>
 	 *
 	 * @param str        要替换的字符串
 	 * @param regex      用于匹配的正则式
@@ -660,7 +790,13 @@ public class ReUtil {
 	}
 
 	/**
-	 * 替换所有正则匹配的文本，并使用自定义函数决定如何替换
+	 * 替换所有正则匹配的文本，并使用自定义函数决定如何替换<br>
+	 * replaceFun可以通过{@link Matcher}提取出匹配到的内容的不同部分，然后经过重新处理、组装变成新的内容放回原位。
+	 *
+	 * <pre class="code">
+	 *     replaceAll(this.content, "(\\d+)", parameters -&gt; "-" + parameters.group(1) + "-")
+	 *     // 结果为："ZZZaaabbbccc中文-1234-"
+	 * </pre>
 	 *
 	 * @param str        要替换的字符串
 	 * @param pattern    用于匹配的正则式

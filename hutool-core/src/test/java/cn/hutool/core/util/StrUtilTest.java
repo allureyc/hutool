@@ -27,6 +27,24 @@ public class StrUtilTest {
 	}
 
 	@Test
+	public void trimNewLineTest() {
+		String str = "\r\naaa";
+		Assert.assertEquals("aaa", StrUtil.trim(str));
+		str = "\raaa";
+		Assert.assertEquals("aaa", StrUtil.trim(str));
+		str = "\naaa";
+		Assert.assertEquals("aaa", StrUtil.trim(str));
+		str = "\r\n\r\naaa";
+		Assert.assertEquals("aaa", StrUtil.trim(str));
+	}
+
+	@Test
+	public void trimTabTest() {
+		String str = "\taaa";
+		Assert.assertEquals("aaa", StrUtil.trim(str));
+	}
+
+	@Test
 	public void cleanBlankTest() {
 		// 包含：制表符、英文空格、不间断空白符、全角空格
 		String str = "	 你 好　";
@@ -52,6 +70,15 @@ public class StrUtilTest {
 
 		final String[] strings = StrUtil.splitToArray("abc/", '/');
 		Assert.assertEquals(2, strings.length);
+	}
+
+	@Test
+	public void splitTest2() {
+		String str = "a.b.";
+		List<String> split = StrUtil.split(str, '.');
+		Assert.assertEquals(3, split.size());
+		Assert.assertEquals("b", split.get(1));
+		Assert.assertEquals("", split.get(2));
 	}
 
 	@Test
@@ -192,6 +219,10 @@ public class StrUtilTest {
 		String a = "1039";
 		String result = StrUtil.padPre(a, 8, "0"); //在字符串1039前补4个0
 		Assert.assertEquals("00001039", result);
+
+		String aa = "1039";
+		String result1 = StrUtil.padPre(aa, -1, "0"); //在字符串1039前补4个0
+		Assert.assertEquals("103", result1);
 	}
 
 	@Test
@@ -351,10 +382,17 @@ public class StrUtilTest {
 				.set("Table_Test_Of_day", "table_test_of_day")
 				.set("_Table_Test_Of_day_", "_table_test_of_day_")
 				.set("_Table_Test_Of_DAY_", "_table_test_of_DAY_")
-				.set("_TableTestOfDAYtoday", "_table_test_of_DAY_today")
+				.set("_TableTestOfDAYToday", "_table_test_of_DAY_today")
 				.set("HelloWorld_test", "hello_world_test")
 				.set("H2", "H2")
 				.set("H#case", "H#case")
+				.forEach((key, value) -> Assert.assertEquals(value, StrUtil.toUnderlineCase(key)));
+	}
+
+	@Test
+	public void toUnderLineCaseTest2() {
+		Dict.create()
+				.set("PNLabel", "PN_label")
 				.forEach((key, value) -> Assert.assertEquals(value, StrUtil.toUnderlineCase(key)));
 	}
 
@@ -403,6 +441,7 @@ public class StrUtilTest {
 		Assert.assertNull(StrUtil.padAfter(null, 10, ' '));
 		Assert.assertEquals("100", StrUtil.padAfter("1", 3, '0'));
 		Assert.assertEquals("23", StrUtil.padAfter("123", 2, '0'));
+		Assert.assertEquals("", StrUtil.padAfter("123", -1, '0'));
 
 		Assert.assertNull(StrUtil.padAfter(null, 10, "ABC"));
 		Assert.assertEquals("1AB", StrUtil.padAfter("1", 3, "ABC"));
@@ -462,6 +501,38 @@ public class StrUtilTest {
 	}
 
 	@Test
+	public void briefTest2() {
+		String str = "123";
+		int maxLength = 3;
+		String brief = StrUtil.brief(str, maxLength);
+		Assert.assertEquals("123", brief);
+
+		maxLength = 2;
+		brief = StrUtil.brief(str, maxLength);
+		Assert.assertEquals("1.", brief);
+
+		maxLength = 1;
+		brief = StrUtil.brief(str, maxLength);
+		Assert.assertEquals("1", brief);
+	}
+
+	@Test
+	public void briefTest3() {
+		String str = "123abc";
+		int maxLength = 3;
+		String brief = StrUtil.brief(str, maxLength);
+		Assert.assertEquals("1.c", brief);
+
+		maxLength = 2;
+		brief = StrUtil.brief(str, maxLength);
+		Assert.assertEquals("1.", brief);
+
+		maxLength = 1;
+		brief = StrUtil.brief(str, maxLength);
+		Assert.assertEquals("1", brief);
+	}
+
+	@Test
 	public void filterTest() {
 		final String filterNumber = StrUtil.filter("hutool678", CharUtil::isNumber);
 		Assert.assertEquals("678", filterNumber);
@@ -491,5 +562,29 @@ public class StrUtilTest {
 	public void indexedFormatTest() {
 		final String ret = StrUtil.indexedFormat("this is {0} for {1}", "a", 1000);
 		Assert.assertEquals("this is a for 1,000", ret);
+	}
+
+	@Test
+	public void hideTest() {
+		Assert.assertNull(StrUtil.hide(null, 1, 1));
+		Assert.assertEquals("", StrUtil.hide("", 1, 1));
+		Assert.assertEquals("****duan@163.com", StrUtil.hide("jackduan@163.com", -1, 4));
+		Assert.assertEquals("ja*kduan@163.com", StrUtil.hide("jackduan@163.com", 2, 3));
+		Assert.assertEquals("jackduan@163.com", StrUtil.hide("jackduan@163.com", 3, 2));
+		Assert.assertEquals("jackduan@163.com", StrUtil.hide("jackduan@163.com", 16, 16));
+		Assert.assertEquals("jackduan@163.com", StrUtil.hide("jackduan@163.com", 16, 17));
+	}
+
+
+	@Test
+	public void isCharEqualsTest(){
+		String a = "aaaaaaaaa";
+		Assert.assertTrue(StrUtil.isCharEquals(a));
+	}
+
+	@Test
+	public void isNumericTest(){
+		String a = "2142342422423423";
+		Assert.assertTrue(StrUtil.isNumeric(a));
 	}
 }

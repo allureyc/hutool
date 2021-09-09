@@ -1,16 +1,22 @@
 package cn.hutool.core.net;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.EnumerationIter;
 import cn.hutool.core.exceptions.UtilException;
 import cn.hutool.core.io.IORuntimeException;
 import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.lang.Filter;
+import cn.hutool.core.util.JNDIUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 
+import javax.naming.NamingException;
+import javax.naming.directory.Attribute;
+import javax.naming.directory.Attributes;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;
+import java.net.Authenticator;
 import java.net.DatagramSocket;
 import java.net.HttpCookie;
 import java.net.IDN;
@@ -243,7 +249,7 @@ public class NetUtil {
 		long cBegin = NetUtil.ipv4ToLong("192.168.0.0");
 		long cEnd = NetUtil.ipv4ToLong("192.168.255.255");
 
-		isInnerIp = isInner(ipNum, aBegin, aEnd) || isInner(ipNum, bBegin, bEnd) || isInner(ipNum, cBegin, cEnd) || ipAddress.equals(LOCAL_IP);
+		isInnerIp = isInner(ipNum, aBegin, aEnd) || isInner(ipNum, bBegin, bEnd) || isInner(ipNum, cBegin, cEnd) || LOCAL_IP.equals(ipAddress);
 		return isInnerIp;
 	}
 
@@ -493,14 +499,24 @@ public class NetUtil {
 		final LinkedHashSet<InetAddress> localAddressList = localAddressList(address -> {
 			// 非loopback地址，指127.*.*.*的地址
 			return false == address.isLoopbackAddress()
-					// 非地区本地地址，指10.0.0.0 ~ 10.255.255.255、172.16.0.0 ~ 172.31.255.255、192.168.0.0 ~ 192.168.255.255
-					&& false == address.isSiteLocalAddress()
 					// 需为IPV4地址
 					&& address instanceof Inet4Address;
 		});
 
 		if (CollUtil.isNotEmpty(localAddressList)) {
-			return CollUtil.get(localAddressList, 0);
+			InetAddress address2 = null;
+			for (InetAddress inetAddress : localAddressList) {
+				if (false == inetAddress.isSiteLocalAddress()) {
+					// 非地区本地地址，指10.0.0.0 ~ 10.255.255.255、172.16.0.0 ~ 172.31.255.255、192.168.0.0 ~ 192.168.255.255
+					return inetAddress;
+				} else if (null == address2) {
+					address2 = inetAddress;
+				}
+			}
+
+			if (null != address2) {
+				return address2;
+			}
 		}
 
 		try {
@@ -543,15 +559,7 @@ public class NetUtil {
 			return null;
 		}
 
-		byte[] mac = null;
-		try {
-			final NetworkInterface networkInterface = NetworkInterface.getByInetAddress(inetAddress);
-			if (null != networkInterface) {
-				mac = networkInterface.getHardwareAddress();
-			}
-		} catch (SocketException e) {
-			throw new UtilException(e);
-		}
+		final byte[] mac = getHardwareAddress(inetAddress);
 		if (null != mac) {
 			final StringBuilder sb = new StringBuilder();
 			String s;
@@ -566,6 +574,39 @@ public class NetUtil {
 			return sb.toString();
 		}
 
+		return null;
+	}
+
+	/**
+	 * 获得本机物理地址
+	 *
+	 * @return 本机物理地址
+	 * @since 5.7.3
+	 */
+	public static byte[] getLocalHardwareAddress() {
+		return getHardwareAddress(getLocalhost());
+	}
+
+	/**
+	 * 获得指定地址信息中的硬件地址
+	 *
+	 * @param inetAddress {@link InetAddress}
+	 * @return 硬件地址
+	 * @since 5.7.3
+	 */
+	public static byte[] getHardwareAddress(InetAddress inetAddress) {
+		if (null == inetAddress) {
+			return null;
+		}
+
+		try {
+			final NetworkInterface networkInterface = NetworkInterface.getByInetAddress(inetAddress);
+			if (null != networkInterface) {
+				return networkInterface.getHardwareAddress();
+			}
+		} catch (SocketException e) {
+			throw new UtilException(e);
+		}
 		return null;
 	}
 
@@ -705,19 +746,6 @@ public class NetUtil {
 	 *
 	 * @param checkString 被检测的字符串
 	 * @return 是否未知
-	 * @since 4.4.1
-	 * @deprecated 拼写错误，请使用{@link #isUnknown(String)}
-	 */
-	@Deprecated
-	public static boolean isUnknow(String checkString) {
-		return isUnknown(checkString);
-	}
-
-	/**
-	 * 检测给定字符串是否为未知，多用于检测HTTP请求相关<br>
-	 *
-	 * @param checkString 被检测的字符串
-	 * @return 是否未知
 	 * @since 5.2.6
 	 */
 	public static boolean isUnknown(String checkString) {
@@ -779,6 +807,55 @@ public class NetUtil {
 			return false;
 		}
 	}
+
+	/**
+	 * 设置全局验证
+	 *
+	 * @param user 用户名
+	 * @param pass 密码，考虑安全，此处不使用String
+	 * @since 5.7.2
+	 */
+	public static void setGlobalAuthenticator(String user, char[] pass) {
+		setGlobalAuthenticator(new UserPassAuthenticator(user, pass));
+	}
+
+	/**
+	 * 设置全局验证
+	 *
+	 * @param authenticator 验证器
+	 * @since 5.7.2
+	 */
+	public static void setGlobalAuthenticator(Authenticator authenticator) {
+		Authenticator.setDefault(authenticator);
+	}
+
+	/**
+	 * 获取DNS信息，如TXT信息：
+	 *
+	 * <pre class="code">
+	 *     NetUtil.attrNames("hutool.cn", "TXT")
+	 * </pre>
+	 *
+	 * @param hostName 主机域名
+	 * @param attrNames 属性
+	 * @since 5.7.7
+	 * @return DNS信息
+	 */
+	public static List<String> getDnsInfo(String hostName, String... attrNames){
+		final String uri = StrUtil.addPrefixIfNot(hostName, "dns:");
+		final Attributes attributes = JNDIUtil.getAttributes(uri, attrNames);
+
+		final List<String> infos = new ArrayList<>();
+		for (Attribute attribute: new EnumerationIter<>(attributes.getAll())){
+			try {
+				infos.add((String) attribute.get());
+			} catch (NamingException ignore) {
+				//ignore
+			}
+		}
+		return infos;
+	}
+
 	// ----------------------------------------------------------------------------------------- Private method start
 
 	/**

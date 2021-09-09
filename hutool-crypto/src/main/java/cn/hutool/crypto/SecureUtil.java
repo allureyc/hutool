@@ -5,7 +5,6 @@ import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.lang.Validator;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.HexUtil;
-import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.asymmetric.AsymmetricAlgorithm;
 import cn.hutool.crypto.asymmetric.RSA;
@@ -969,19 +968,6 @@ public class SecureUtil {
 		return new Digester(digestAlgorithm).digestHex(MapUtil.sortJoin(params, separator, keyValueSeparator, isIgnoreNull, otherParams));
 	}
 
-	// ------------------------------------------------------------------- UUID
-
-	/**
-	 * 简化的UUID，去掉了横线
-	 *
-	 * @return 简化的UUID，去掉了横线
-	 * @deprecated 请使用 {@link IdUtil#simpleUUID()}
-	 */
-	@Deprecated
-	public static String simpleUUID() {
-		return IdUtil.simpleUUID();
-	}
-
 	/**
 	 * 增加加密解密的算法提供者，默认优先使用，例如：
 	 *
@@ -1070,6 +1056,26 @@ public class SecureUtil {
 		}
 
 		return mac;
+	}
+
+	/**
+	 * 创建{@link Signature}
+	 *
+	 * @param algorithm 算法
+	 * @return {@link Signature}
+	 * @since 5.7.0
+	 */
+	public static Signature createSignature(String algorithm) {
+		final Provider provider = GlobalBouncyCastleProvider.INSTANCE.getProvider();
+
+		Signature signature;
+		try {
+			signature = (null == provider) ? Signature.getInstance(algorithm) : Signature.getInstance(algorithm, provider);
+		} catch (NoSuchAlgorithmException e) {
+			throw new CryptoException(e);
+		}
+
+		return signature;
 	}
 
 	/**

@@ -30,11 +30,17 @@ import java.awt.Image;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
+import java.awt.color.ColorSpace;
 import java.awt.font.FontRenderContext;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
+import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
+import java.awt.image.BufferedImageOp;
+import java.awt.image.ColorConvertOp;
 import java.awt.image.ColorModel;
+import java.awt.image.FilteredImageSource;
+import java.awt.image.ImageFilter;
 import java.awt.image.RenderedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -43,8 +49,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 /**
@@ -449,9 +457,9 @@ public class ImgUtil {
 	}
 
 	/**
-	 * 图像切割（指定切片的行数和列数）
+	 * 图像切割（指定切片的行数和列数），默认RGB模式
 	 *
-	 * @param srcImage 源图像
+	 * @param srcImage 源图像，如果非{@link BufferedImage}，则默认使用RGB模式
 	 * @param destDir  切片目标文件夹
 	 * @param rows     目标切片行数。默认2，必须是范围 [1, 20] 之内
 	 * @param cols     目标切片列数。默认2，必须是范围 [1, 20] 之内
@@ -1164,9 +1172,9 @@ public class ImgUtil {
 	 * @since 4.3.2
 	 */
 	public static BufferedImage toBufferedImage(Image image, String imageType) {
-		final int type = imageType.equalsIgnoreCase(IMAGE_TYPE_PNG)
-				 ? BufferedImage.TYPE_INT_ARGB
-				 : BufferedImage.TYPE_INT_RGB;
+		final int type = IMAGE_TYPE_PNG.equalsIgnoreCase(imageType)
+				? BufferedImage.TYPE_INT_ARGB
+				: BufferedImage.TYPE_INT_RGB;
 		return toBufferedImage(image, type);
 	}
 
@@ -1542,6 +1550,7 @@ public class ImgUtil {
 	 * @since 3.1.0
 	 */
 	public static void write(Image image, File targetFile) throws IORuntimeException {
+		FileUtil.touch(targetFile);
 		ImageOutputStream out = null;
 		try {
 			out = getImageOutputStream(targetFile);
@@ -1649,7 +1658,7 @@ public class ImgUtil {
 	 * @return {@link Image}
 	 * @since 5.5.8
 	 */
-	public static Image getImage(URL url){
+	public static Image getImage(URL url) {
 		return Toolkit.getDefaultToolkit().getImage(url);
 	}
 
@@ -1724,7 +1733,7 @@ public class ImgUtil {
 		}
 
 		if (null == result) {
-			throw new IllegalArgumentException("Image type of [" + imageUrl.toString() + "] is not supported!");
+			throw new IllegalArgumentException("Image type of [" + imageUrl + "] is not supported!");
 		}
 
 		return result;
@@ -2002,6 +2011,57 @@ public class ImgUtil {
 		);
 	}
 
+	/**
+	 * 获取给定图片的主色调，背景填充用
+	 *
+	 * @param image      {@link BufferedImage}
+	 * @param rgbFilters 过滤多种颜色
+	 * @return {@link String} #ffffff
+	 * @since 5.6.7
+	 */
+	public static String getMainColor(BufferedImage image, int[]... rgbFilters) {
+		int r, g, b;
+		Map<String, Long> countMap = new HashMap<>();
+		int width = image.getWidth();
+		int height = image.getHeight();
+		int minx = image.getMinX();
+		int miny = image.getMinY();
+		for (int i = minx; i < width; i++) {
+			for (int j = miny; j < height; j++) {
+				int pixel = image.getRGB(i, j);
+				r = (pixel & 0xff0000) >> 16;
+				g = (pixel & 0xff00) >> 8;
+				b = (pixel & 0xff);
+				if (rgbFilters != null && rgbFilters.length > 0) {
+					for (int[] rgbFilter : rgbFilters) {
+						if (r == rgbFilter[0] && g == rgbFilter[1] && b == rgbFilter[2]) {
+							break;
+						}
+					}
+				}
+				countMap.merge(r + "-" + g + "-" + b, 1L, Long::sum);
+			}
+		}
+		String maxColor = null;
+		long maxCount = 0;
+		for (Map.Entry<String, Long> entry : countMap.entrySet()) {
+			String key = entry.getKey();
+			Long count = entry.getValue();
+			if (count > maxCount) {
+				maxColor = key;
+				maxCount = count;
+			}
+		}
+		final String[] splitRgbStr = StrUtil.splitToArray(maxColor, '-');
+		String rHex = Integer.toHexString(Integer.parseInt(splitRgbStr[0]));
+		String gHex = Integer.toHexString(Integer.parseInt(splitRgbStr[1]));
+		String bHex = Integer.toHexString(Integer.parseInt(splitRgbStr[2]));
+		rHex = rHex.length() == 1 ? "0" + rHex : rHex;
+		gHex = gHex.length() == 1 ? "0" + gHex : gHex;
+		bHex = bHex.length() == 1 ? "0" + bHex : bHex;
+		return "#" + rHex + gHex + bHex;
+	}
+
 	// ------------------------------------------------------------------------------------------------------ 背景图换算
 
 	/**
@@ -2093,5 +2153,56 @@ public class ImgUtil {
 	 */
 	public static BufferedImage backgroundRemoval(ByteArrayOutputStream outputStream, Color override, int tolerance) {
 		return BackgroundRemoval.backgroundRemoval(outputStream, override, tolerance);
+	}
+
+	/**
+	 * 图片颜色转换<br>
+	 * 可以使用灰度 (gray)等
+	 *
+	 * @param colorSpace 颜色模式，如灰度等
+	 * @param image 被转换的图片
+	 * @return 转换后的图片
+	 * @since 5.7.8
+	 */
+	public static BufferedImage colorConvert(ColorSpace colorSpace, BufferedImage image) {
+		return filter(new ColorConvertOp(colorSpace, null), image);
+	}
+
+	/**
+	 * 转换图片<br>
+	 * 可以使用一系列平移 (translation)、缩放 (scale)、翻转 (flip)、旋转 (rotation) 和错切 (shear) 来构造仿射变换。
+	 *
+	 * @param xform 2D仿射变换，它执行从 2D 坐标到其他 2D 坐标的线性映射，保留了线的“直线性”和“平行性”。
+	 * @param image 被转换的图片
+	 * @return 转换后的图片
+	 * @since 5.7.8
+	 */
+	public static BufferedImage transform(AffineTransform xform, BufferedImage image) {
+		return filter(new AffineTransformOp(xform, null), image);
+	}
+
+	/**
+	 * 图片过滤转换
+	 *
+	 * @param op    过滤操作实现，如二维转换可传入{@link AffineTransformOp}
+	 * @param image 原始图片
+	 * @return 过滤后的图片
+	 * @since 5.7.8
+	 */
+	public static BufferedImage filter(BufferedImageOp op, BufferedImage image) {
+		return op.filter(image, null);
+	}
+
+	/**
+	 * 图片滤镜，借助 {@link ImageFilter}实现，实现不同的图片滤镜
+	 *
+	 * @param filter 滤镜实现
+	 * @param image 图片
+	 * @return 滤镜后的图片
+	 * @since 5.7.8
+	 */
+	public static Image filter(ImageFilter filter, Image image){
+		return Toolkit.getDefaultToolkit().createImage(
+				new FilteredImageSource(image.getSource(), filter));
 	}
 }

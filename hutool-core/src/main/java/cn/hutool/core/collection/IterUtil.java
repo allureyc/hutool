@@ -1,13 +1,15 @@
 package cn.hutool.core.collection;
 
 import cn.hutool.core.exceptions.UtilException;
+import cn.hutool.core.lang.Assert;
+import cn.hutool.core.lang.Editor;
 import cn.hutool.core.lang.Filter;
+import cn.hutool.core.lang.Matcher;
 import cn.hutool.core.lang.func.Func1;
 import cn.hutool.core.map.MapUtil;
-import cn.hutool.core.util.ArrayUtil;
+import cn.hutool.core.text.StrJoiner;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.ReflectUtil;
-import cn.hutool.core.util.StrUtil;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -28,6 +30,18 @@ import java.util.function.Function;
  * @since 3.1.0
  */
 public class IterUtil {
+
+	/**
+	 * 获取{@link Iterator}
+	 *
+	 * @param iterable {@link Iterable}
+	 * @param <T>      元素类型
+	 * @return 当iterable为null返回{@code null}，否则返回对应的{@link Iterator}
+	 * @since 5.7.2
+	 */
+	public static <T> Iterator<T> getIter(Iterable<T> iterable) {
+		return null == iterable ? null : iterable.iterator();
+	}
 
 	/**
 	 * Iterable是否为空
@@ -117,34 +131,7 @@ public class IterUtil {
 	 * @since 3.3.0
 	 */
 	public static boolean isAllNull(Iterator<?> iter) {
-		if (null == iter) {
-			return true;
-		}
-
-		while (iter.hasNext()) {
-			if (null != iter.next()) {
-				return false;
-			}
-		}
-		return true;
-	}
-
-	/**
-	 * 根据集合返回一个元素计数的 {@link Map}<br>
-	 * 所谓元素计数就是假如这个集合中某个元素出现了n次，那将这个元素做为key，n做为value<br>
-	 * 例如：[a,b,c,c,c] 得到：<br>
-	 * a: 1<br>
-	 * b: 1<br>
-	 * c: 3<br>
-	 *
-	 * @param <T>  集合元素类型
-	 * @param iter {@link Iterable}，如果为null返回一个空的Map
-	 * @return {@link Map}
-	 * @deprecated 如果对象同时实现Iterable和Iterator接口会产生歧义，请使用CollUtil.countMap
-	 */
-	@Deprecated
-	public static <T> Map<T, Integer> countMap(Iterable<T> iter) {
-		return countMap(null == iter ? null : iter.iterator());
+		return null == getFirstNoneNull(iter);
 	}
 
 	/**
@@ -162,36 +149,13 @@ public class IterUtil {
 	public static <T> Map<T, Integer> countMap(Iterator<T> iter) {
 		final HashMap<T, Integer> countMap = new HashMap<>();
 		if (null != iter) {
-			Integer count;
 			T t;
 			while (iter.hasNext()) {
 				t = iter.next();
-				count = countMap.get(t);
-				if (null == count) {
-					countMap.put(t, 1);
-				} else {
-					countMap.put(t, count + 1);
-				}
+				countMap.put(t, countMap.getOrDefault(t, 0) + 1);
 			}
 		}
 		return countMap;
-	}
-
-	/**
-	 * 字段值与列表值对应的Map，常用于元素对象中有唯一ID时需要按照这个ID查找对象的情况<br>
-	 * 例如：车牌号 =》车
-	 *
-	 * @param <K>       字段名对应值得类型，不确定请使用Object
-	 * @param <V>       对象类型
-	 * @param iter      对象列表
-	 * @param fieldName 字段名（会通过反射获取其值）
-	 * @return 某个字段值与对象对应Map
-	 * @since 4.0.4
-	 * @deprecated 如果对象同时实现Iterable和Iterator接口会产生歧义，请使用CollUtil.fieldValueMap
-	 */
-	@Deprecated
-	public static <K, V> Map<K, V> fieldValueMap(Iterable<V> iter, String fieldName) {
-		return fieldValueMap(null == iter ? null : iter.iterator(), fieldName);
 	}
 
 	/**
@@ -208,23 +172,6 @@ public class IterUtil {
 	@SuppressWarnings("unchecked")
 	public static <K, V> Map<K, V> fieldValueMap(Iterator<V> iter, String fieldName) {
 		return toMap(iter, new HashMap<>(), (value) -> (K) ReflectUtil.getFieldValue(value, fieldName));
-	}
-
-	/**
-	 * 两个字段值组成新的Map
-	 *
-	 * @param <K>               字段名对应值得类型，不确定请使用Object
-	 * @param <V>               值类型，不确定使用Object
-	 * @param iterable          对象列表
-	 * @param fieldNameForKey   做为键的字段名（会通过反射获取其值）
-	 * @param fieldNameForValue 做为值的字段名（会通过反射获取其值）
-	 * @return 某个字段值与对象对应Map
-	 * @since 4.6.2
-	 * @deprecated 如果对象同时实现Iterable和Iterator接口会产生歧义，请使用CollUtil.fieldValueMap
-	 */
-	@Deprecated
-	public static <K, V> Map<K, V> fieldValueAsMap(Iterable<?> iterable, String fieldNameForKey, String fieldNameForValue) {
-		return fieldValueAsMap(null == iterable ? null : iterable.iterator(), fieldNameForKey, fieldNameForValue);
 	}
 
 	/**
@@ -256,7 +203,7 @@ public class IterUtil {
 	 * @since 4.6.2
 	 */
 	public static <V> List<Object> fieldValueList(Iterable<V> iterable, String fieldName) {
-		return fieldValueList(null == iterable ? null : iterable.iterator(), fieldName);
+		return fieldValueList(getIter(iterable), fieldName);
 	}
 
 	/**
@@ -281,43 +228,6 @@ public class IterUtil {
 	}
 
 	/**
-	 * 以 conjunction 为分隔符将集合转换为字符串
-	 *
-	 * @param <T>         集合元素类型
-	 * @param iterable    {@link Iterable}
-	 * @param conjunction 分隔符
-	 * @return 连接后的字符串
-	 * @deprecated 如果对象同时实现Iterable和Iterator接口会产生歧义，请使用CollUtil.join
-	 */
-	@Deprecated
-	public static <T> String join(Iterable<T> iterable, CharSequence conjunction) {
-		if (null == iterable) {
-			return null;
-		}
-		return join(iterable.iterator(), conjunction);
-	}
-
-	/**
-	 * 以 conjunction 为分隔符将集合转换为字符串
-	 *
-	 * @param <T>         集合元素类型
-	 * @param iterable    {@link Iterable}
-	 * @param conjunction 分隔符
-	 * @param prefix      每个元素添加的前缀，null表示不添加
-	 * @param suffix      每个元素添加的后缀，null表示不添加
-	 * @return 连接后的字符串
-	 * @since 4.0.10
-	 * @deprecated 如果对象同时实现Iterable和Iterator接口会产生歧义，请使用CollUtil.join
-	 */
-	@Deprecated
-	public static <T> String join(Iterable<T> iterable, CharSequence conjunction, String prefix, String suffix) {
-		if (null == iterable) {
-			return null;
-		}
-		return join(iterable.iterator(), conjunction, prefix, suffix);
-	}
-
-	/**
 	 * 以 conjunction 为分隔符将集合转换为字符串<br>
 	 * 如果集合元素为数组、{@link Iterable}或{@link Iterator}，则递归组合其为字符串
 	 *
@@ -327,7 +237,7 @@ public class IterUtil {
 	 * @return 连接后的字符串
 	 */
 	public static <T> String join(Iterator<T> iterator, CharSequence conjunction) {
-		return join(iterator, conjunction, null, null);
+		return StrJoiner.of(conjunction).append(iterator).toString();
 	}
 
 	/**
@@ -343,32 +253,30 @@ public class IterUtil {
 	 * @since 4.0.10
 	 */
 	public static <T> String join(Iterator<T> iterator, CharSequence conjunction, String prefix, String suffix) {
+		return StrJoiner.of(conjunction, prefix, suffix)
+				// 每个元素都添加前后缀
+				.setWrapElement(true)
+				.append(iterator)
+				.toString();
+	}
+
+	/**
+	 * 以 conjunction 为分隔符将集合转换为字符串<br>
+	 * 如果集合元素为数组、{@link Iterable}或{@link Iterator}，则递归组合其为字符串
+	 *
+	 * @param <T>         集合元素类型
+	 * @param iterator    集合
+	 * @param conjunction 分隔符
+	 * @param func        集合元素转换器，将元素转换为字符串
+	 * @return 连接后的字符串
+	 * @since 5.6.7
+	 */
+	public static <T> String join(Iterator<T> iterator, CharSequence conjunction, Function<T, ? extends CharSequence> func) {
 		if (null == iterator) {
 			return null;
 		}
 
-		final StringBuilder sb = new StringBuilder();
-		boolean isFirst = true;
-		T item;
-		while (iterator.hasNext()) {
-			if (isFirst) {
-				isFirst = false;
-			} else {
-				sb.append(conjunction);
-			}
-
-			item = iterator.next();
-			if (ArrayUtil.isArray(item)) {
-				sb.append(ArrayUtil.join(ArrayUtil.wrap(item), conjunction, prefix, suffix));
-			} else if (item instanceof Iterable<?>) {
-				sb.append(join((Iterable<?>) item, conjunction, prefix, suffix));
-			} else if (item instanceof Iterator<?>) {
-				sb.append(join((Iterator<?>) item, conjunction, prefix, suffix));
-			} else {
-				sb.append(StrUtil.wrap(String.valueOf(item), prefix, suffix));
-			}
-		}
-		return sb.toString();
+		return StrJoiner.of(conjunction).append(iterator, func).toString();
 	}
 
 	/**
@@ -649,6 +557,21 @@ public class IterUtil {
 	}
 
 	/**
+	 * 获取集合的第一个非空元素
+	 *
+	 * @param <T>      集合元素类型
+	 * @param iterable {@link Iterable}
+	 * @return 第一个元素
+	 * @since 5.7.2
+	 */
+	public static <T> T getFirstNoneNull(Iterable<T> iterable) {
+		if (null == iterable) {
+			return null;
+		}
+		return getFirstNoneNull(iterable.iterator());
+	}
+
+	/**
 	 * 获取集合的第一个元素
 	 *
 	 * @param <T>      集合元素类型
@@ -658,6 +581,40 @@ public class IterUtil {
 	public static <T> T getFirst(Iterator<T> iterator) {
 		if (null != iterator && iterator.hasNext()) {
 			return iterator.next();
+		}
+		return null;
+	}
+
+	/**
+	 * 获取集合的第一个非空元素
+	 *
+	 * @param <T>      集合元素类型
+	 * @param iterator {@link Iterator}
+	 * @return 第一个非空元素，null表示未找到
+	 * @since 5.7.2
+	 */
+	public static <T> T getFirstNoneNull(Iterator<T> iterator) {
+		return firstMatch(iterator, Objects::nonNull);
+	}
+
+	/**
+	 * 返回{@link Iterator}中第一个匹配规则的值
+	 *
+	 * @param <T>     数组元素类型
+	 * @param iterator  {@link Iterator}
+	 * @param matcher 匹配接口，实现此接口自定义匹配规则
+	 * @return 匹配元素，如果不存在匹配元素或{@link Iterator}为空，返回 {@code null}
+	 * @since 5.7.5
+	 */
+	public static <T> T firstMatch(Iterator<T> iterator, Matcher<T> matcher) {
+		Assert.notNull(matcher, "Matcher must be not null !");
+		if (null != iterator) {
+			while(iterator.hasNext()){
+				final T next = iterator.next();
+				if(matcher.match(next)){
+					return next;
+				}
+			}
 		}
 		return null;
 	}
@@ -693,6 +650,37 @@ public class IterUtil {
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * 编辑，此方法产生一个新{@link ArrayList}<br>
+	 * 编辑过程通过传入的Editor实现来返回需要的元素内容，这个Editor实现可以实现以下功能：
+	 *
+	 * <pre>
+	 * 1、过滤出需要的对象，如果返回null表示这个元素对象抛弃
+	 * 2、修改元素对象，返回集合中为修改后的对象
+	 * </pre>
+	 *
+	 * @param <T>    集合元素类型
+	 * @param iter   集合
+	 * @param editor 编辑器接口, {@code null}表示不编辑
+	 * @return 过滤后的集合
+	 * @since 5.7.1
+	 */
+	public static <T> List<T> edit(Iterable<T> iter, Editor<T> editor) {
+		final List<T> result = new ArrayList<>();
+		if (null == iter) {
+			return result;
+		}
+
+		T modified;
+		for (T t : iter) {
+			modified = (null == editor) ? t : editor.edit(t);
+			if (null != modified) {
+				result.add(t);
+			}
+		}
+		return result;
 	}
 
 	/**
@@ -832,7 +820,7 @@ public class IterUtil {
 	 * @since 5.5.0
 	 */
 	public static int size(final Iterable<?> iterable) {
-		if(null == iterable){
+		if (null == iterable) {
 			return 0;
 		}
 

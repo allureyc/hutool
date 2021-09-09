@@ -29,7 +29,7 @@ public class JavaSourceCompilerTest {
 						FileUtil.getInputStream("test-compile/a/A$1.class"),
 						FileUtil.getInputStream("test-compile/a/A$InnerClass.class")
 				});
-		final ClassLoader classLoader = JavaSourceCompiler.create(null)
+		final ClassLoader classLoader = CompilerUtil.getCompiler(null)
 				.addSource(FileUtil.file("test-compile/b/B.java"))
 				.addSource("c.C", FileUtil.readUtf8String("test-compile/c/C.java"))
 				.addLibrary(libFile)
@@ -38,7 +38,6 @@ public class JavaSourceCompilerTest {
 		final Class<?> clazz = classLoader.loadClass("c.C");
 		Object obj = ReflectUtil.newInstance(clazz);
 		Assert.assertTrue(String.valueOf(obj).startsWith("c.C@"));
-		FileUtil.del(libFile);
 	}
 
 }

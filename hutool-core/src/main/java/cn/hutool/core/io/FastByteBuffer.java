@@ -40,16 +40,19 @@ public class FastByteBuffer {
 	private final int minChunkLen;
 
 	public FastByteBuffer() {
-		this.minChunkLen = 1024;
+		this(1024);
 	}
 
 	public FastByteBuffer(int size) {
+		if(size <= 0){
+			size = 1024;
+		}
 		this.minChunkLen = Math.abs(size);
 	}
 
 	/**
 	 * 分配下一个缓冲区，不会小于1024
-	 * 
+	 *
 	 * @param newSize 理想缓冲区字节数
 	 */
 	private void needNewBuffer(int newSize) {
@@ -73,7 +76,7 @@ public class FastByteBuffer {
 
 	/**
 	 * 向快速缓冲加入数据
-	 * 
+	 *
 	 * @param array 数据
 	 * @param off 偏移量
 	 * @param len 字节数
@@ -117,9 +120,9 @@ public class FastByteBuffer {
 
 	/**
 	 * 向快速缓冲加入数据
-	 * 
+	 *
 	 * @param array 数据
-	 * 
+	 *
 	 * @return 快速缓冲自身 @see FastByteBuffer
 	 */
 	public FastByteBuffer append(byte[] array) {
@@ -128,7 +131,7 @@ public class FastByteBuffer {
 
 	/**
 	 * 向快速缓冲加入一个字节
-	 * 
+	 *
 	 * @param element 一个字节的数据
 	 * @return 快速缓冲自身 @see FastByteBuffer
 	 */
@@ -146,7 +149,7 @@ public class FastByteBuffer {
 
 	/**
 	 * 将另一个快速缓冲加入到自身
-	 * 
+	 *
 	 * @param buff 快速缓冲
 	 * @return 快速缓冲自身 @see FastByteBuffer
 	 */
@@ -171,7 +174,7 @@ public class FastByteBuffer {
 
 	/**
 	 * 当前缓冲位于缓冲区的索引位
-	 * 
+	 *
 	 * @return {@link #currentBufferIndex}
 	 */
 	public int index() {
@@ -184,7 +187,7 @@ public class FastByteBuffer {
 
 	/**
 	 * 根据索引位返回缓冲集中的缓冲
-	 * 
+	 *
 	 * @param index 索引位
 	 * @return 缓冲
 	 */
@@ -202,7 +205,7 @@ public class FastByteBuffer {
 
 	/**
 	 * 返回快速缓冲中的数据
-	 * 
+	 *
 	 * @return 快速缓冲中的数据
 	 */
 	public byte[] toArray() {
@@ -226,7 +229,7 @@ public class FastByteBuffer {
 
 	/**
 	 * 返回快速缓冲中的数据
-	 * 
+	 *
 	 * @param start 逻辑起始位置
 	 * @param len 逻辑字节长
 	 * @return 快速缓冲中的数据
@@ -263,7 +266,7 @@ public class FastByteBuffer {
 
 	/**
 	 * 根据索引位返回一个字节
-	 * 
+	 *
 	 * @param index 索引位
 	 * @return 一个字节
 	 */

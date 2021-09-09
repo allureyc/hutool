@@ -134,7 +134,7 @@ public class URLUtil {
 	 * @return URL
 	 * @since 5.5.2
 	 */
-	public static URI getStringURI(CharSequence content){
+	public static URI getStringURI(CharSequence content) {
 		final String contentStr = StrUtil.addPrefixIfNot(content, "string:///");
 		return URI.create(contentStr);
 	}
@@ -280,20 +280,6 @@ public class URLUtil {
 	 * @param relativePath 相对URL
 	 * @return 相对路径
 	 * @throws UtilException MalformedURLException
-	 * @deprecated 拼写错误，请使用{@link #completeUrl(String, String)}
-	 */
-	@Deprecated
-	public static String complateUrl(String baseUrl, String relativePath) {
-		return completeUrl(baseUrl, relativePath);
-	}
-
-	/**
-	 * 补全相对路径
-	 *
-	 * @param baseUrl      基准URL
-	 * @param relativePath 相对URL
-	 * @return 相对路径
-	 * @throws UtilException MalformedURLException
 	 */
 	public static String completeUrl(String baseUrl, String relativePath) {
 		baseUrl = normalize(baseUrl, false);
@@ -354,20 +340,6 @@ public class URLUtil {
 	}
 
 	/**
-	 * 编码URL，默认使用UTF-8编码<br>
-	 * 将需要转换的内容（ASCII码形式之外的内容），用十六进制表示法转换出来，并在之前加上%开头。<br>
-	 * 此方法用于POST请求中的请求体自动编码，转义大部分特殊字符
-	 *
-	 * @param url URL
-	 * @return 编码后的URL
-	 * @throws UtilException UnsupportedEncodingException
-	 * @since 3.1.2
-	 */
-	public static String encodeQuery(String url) throws UtilException {
-		return encodeQuery(url, CharsetUtil.CHARSET_UTF_8);
-	}
-
-	/**
 	 * 编码字符为 application/x-www-form-urlencoded<br>
 	 * 将需要转换的内容（ASCII码形式之外的内容），用十六进制表示法转换出来，并在之前加上%开头。<br>
 	 * 此方法用于URL自动编码，类似于浏览器中键入地址自动编码，对于像类似于“/”的字符不再编码
@@ -385,6 +357,20 @@ public class URLUtil {
 			charset = CharsetUtil.defaultCharset();
 		}
 		return URLEncoder.DEFAULT.encode(url, charset);
+	}
+
+	/**
+	 * 编码URL，默认使用UTF-8编码<br>
+	 * 将需要转换的内容（ASCII码形式之外的内容），用十六进制表示法转换出来，并在之前加上%开头。<br>
+	 * 此方法用于POST请求中的请求体自动编码，转义大部分特殊字符
+	 *
+	 * @param url URL
+	 * @return 编码后的URL
+	 * @throws UtilException UnsupportedEncodingException
+	 * @since 3.1.2
+	 */
+	public static String encodeQuery(String url) throws UtilException {
+		return encodeQuery(url, CharsetUtil.CHARSET_UTF_8);
 	}
 
 	/**
@@ -408,35 +394,52 @@ public class URLUtil {
 	}
 
 	/**
-	 * 编码URL字符为 application/x-www-form-urlencoded<br>
+	 * 编码URL，默认使用UTF-8编码<br>
 	 * 将需要转换的内容（ASCII码形式之外的内容），用十六进制表示法转换出来，并在之前加上%开头。<br>
-	 * 此方法用于URL自动编码，类似于浏览器中键入地址自动编码，对于像类似于“/”的字符不再编码
+	 * 此方法用于URL的Segment中自动编码，转义大部分特殊字符
 	 *
-	 * @param url     URL
-	 * @param charset 编码
+	 * <pre>
+	 * pchar = unreserved（不处理） / pct-encoded / sub-delims（子分隔符） / "@"
+	 * unreserved = ALPHA / DIGIT / "-" / "." / "_" / "~"
+	 * sub-delims = "!" / "$" / "&amp;" / "'" / "(" / ")" / "*" / "+" / "," / ";" / "="
+	 * </pre>
+	 *
+	 * @param url URL
 	 * @return 编码后的URL
 	 * @throws UtilException UnsupportedEncodingException
+	 * @since 5.6.5
 	 */
-	public static String encode(String url, String charset) throws UtilException {
-		if (StrUtil.isEmpty(url)) {
-			return url;
-		}
-		return encode(url, StrUtil.isBlank(charset) ? CharsetUtil.defaultCharset() : CharsetUtil.charset(charset));
+	public static String encodePathSegment(String url) throws UtilException {
+		return encodePathSegment(url, CharsetUtil.CHARSET_UTF_8);
 	}
 
 	/**
-	 * 编码URL<br>
+	 * 编码字符为URL中查询语句<br>
 	 * 将需要转换的内容（ASCII码形式之外的内容），用十六进制表示法转换出来，并在之前加上%开头。<br>
-	 * 此方法用于POST请求中的请求体自动编码，转义大部分特殊字符
+	 * 此方法用于URL的Segment中自动编码，转义大部分特殊字符
 	 *
-	 * @param url     URL
+	 * <pre>
+	 * pchar = unreserved（不处理） / pct-encoded / sub-delims（子分隔符） / "@"
+	 * unreserved = ALPHA / DIGIT / "-" / "." / "_" / "~"
+	 * sub-delims = "!" / "$" / "&amp;" / "'" / "(" / ")" / "*" / "+" / "," / ";" / "="
+	 * </pre>
+	 *
+	 * @param url     被编码内容
 	 * @param charset 编码
-	 * @return 编码后的URL
-	 * @throws UtilException UnsupportedEncodingException
+	 * @return 编码后的字符
+	 * @since 5.6.5
 	 */
-	public static String encodeQuery(String url, String charset) throws UtilException {
-		return encodeQuery(url, StrUtil.isBlank(charset) ? CharsetUtil.defaultCharset() : CharsetUtil.charset(charset));
+	public static String encodePathSegment(String url, Charset charset) {
+		if (StrUtil.isEmpty(url)) {
+			return url;
+		}
+		if (null == charset) {
+			charset = CharsetUtil.defaultCharset();
+		}
+		return URLEncoder.PATH_SEGMENT.encode(url, charset);
 	}
+
+	//-------------------------------------------------------------------------- decode
 
 	/**
 	 * 解码URL<br>
@@ -465,6 +468,23 @@ public class URLUtil {
 			return content;
 		}
 		return URLDecoder.decode(content, charset);
+	}
+
+	/**
+	 * 解码application/x-www-form-urlencoded字符<br>
+	 * 将%开头的16进制表示的内容解码。
+	 *
+	 * @param content       被解码内容
+	 * @param charset       编码，null表示不解码
+	 * @param isPlusToSpace 是否+转换为空格
+	 * @return 编码后的字符
+	 * @since 5.6.3
+	 */
+	public static String decode(String content, Charset charset, boolean isPlusToSpace) {
+		if (null == charset) {
+			return content;
+		}
+		return URLDecoder.decode(content, charset, isPlusToSpace);
 	}
 
 	/**
@@ -705,7 +725,7 @@ public class URLUtil {
 	 *
 	 * @param url          URL字符串
 	 * @param isEncodePath 是否对URL中path部分的中文和特殊字符做转义（不包括 http:, /和域名部分）
-	 * @param replaceSlash  是否替换url body中的 //
+	 * @param replaceSlash 是否替换url body中的 //
 	 * @return 标准化后的URL字符串
 	 * @since 5.5.5
 	 */

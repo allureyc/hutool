@@ -520,26 +520,27 @@ public class PrimitiveArrayUtil {
 	// ---------------------------------------------------------------------- split
 
 	/**
-	 * 拆分byte数组为几个等份（最后一份可能小于len）
+	 * 拆分byte数组为几个等份（最后一份按照剩余长度分配空间）
 	 *
 	 * @param array 数组
 	 * @param len   每个小节的长度
 	 * @return 拆分后的数组
 	 */
 	public static byte[][] split(byte[] array, int len) {
-		int x = array.length / len;
-		int y = array.length % len;
-		int z = 0;
-		if (y != 0) {
-			z = 1;
+		int amount = array.length / len;
+		final int remainder = array.length % len;
+		if (remainder != 0) {
+			++amount;
 		}
-		byte[][] arrays = new byte[x + z][];
+		final byte[][] arrays = new byte[amount][];
 		byte[] arr;
-		for (int i = 0; i < x + z; i++) {
-			arr = new byte[len];
-			if (i == x + z - 1 && y != 0) {
-				System.arraycopy(array, i * len, arr, 0, y);
+		for (int i = 0; i < amount; i++) {
+			if (i == amount - 1 && remainder != 0) {
+				// 有剩余，按照实际长度创建
+				arr = new byte[remainder];
+				System.arraycopy(array, i * len, arr, 0, remainder);
 			} else {
+				arr = new byte[len];
 				System.arraycopy(array, i * len, arr, 0, len);
 			}
 			arrays[i] = arr;
@@ -1593,7 +1594,9 @@ public class PrimitiveArrayUtil {
 	 * @param array       数组
 	 * @param conjunction 分隔符
 	 * @return 连接后的字符串
+	 * @deprecated 请使用 {@link ArrayUtil#join(Object, CharSequence)}
 	 */
+	@Deprecated
 	public static String join(int[] array, CharSequence conjunction) {
 		if (null == array) {
 			return null;
@@ -1618,7 +1621,36 @@ public class PrimitiveArrayUtil {
 	 * @param array       数组
 	 * @param conjunction 分隔符
 	 * @return 连接后的字符串
+	 * @deprecated 请使用 {@link ArrayUtil#join(Object, CharSequence)}
 	 */
+	@Deprecated
+	public static String join(long[] array, CharSequence conjunction) {
+		if (null == array) {
+			return null;
+		}
+
+		final StringBuilder sb = new StringBuilder();
+		boolean isFirst = true;
+		for (long item : array) {
+			if (isFirst) {
+				isFirst = false;
+			} else {
+				sb.append(conjunction);
+			}
+			sb.append(item);
+		}
+		return sb.toString();
+	}
+
+	/**
+	 * 以 conjunction 为分隔符将数组转换为字符串
+	 *
+	 * @param array       数组
+	 * @param conjunction 分隔符
+	 * @return 连接后的字符串
+	 * @deprecated 请使用 {@link ArrayUtil#join(Object, CharSequence)}
+	 */
+	@Deprecated
 	public static String join(short[] array, CharSequence conjunction) {
 		if (null == array) {
 			return null;
@@ -1643,7 +1675,9 @@ public class PrimitiveArrayUtil {
 	 * @param array       数组
 	 * @param conjunction 分隔符
 	 * @return 连接后的字符串
+	 * @deprecated 请使用 {@link ArrayUtil#join(Object, CharSequence)}
 	 */
+	@Deprecated
 	public static String join(char[] array, CharSequence conjunction) {
 		if (null == array) {
 			return null;
@@ -1668,7 +1702,9 @@ public class PrimitiveArrayUtil {
 	 * @param array       数组
 	 * @param conjunction 分隔符
 	 * @return 连接后的字符串
+	 * @deprecated 请使用 {@link ArrayUtil#join(Object, CharSequence)}
 	 */
+	@Deprecated
 	public static String join(byte[] array, CharSequence conjunction) {
 		if (null == array) {
 			return null;
@@ -1693,7 +1729,9 @@ public class PrimitiveArrayUtil {
 	 * @param array       数组
 	 * @param conjunction 分隔符
 	 * @return 连接后的字符串
+	 * @deprecated 请使用 {@link ArrayUtil#join(Object, CharSequence)}
 	 */
+	@Deprecated
 	public static String join(boolean[] array, CharSequence conjunction) {
 		if (null == array) {
 			return null;
@@ -1718,7 +1756,9 @@ public class PrimitiveArrayUtil {
 	 * @param array       数组
 	 * @param conjunction 分隔符
 	 * @return 连接后的字符串
+	 * @deprecated 请使用 {@link ArrayUtil#join(Object, CharSequence)}
 	 */
+	@Deprecated
 	public static String join(float[] array, CharSequence conjunction) {
 		if (null == array) {
 			return null;
@@ -1743,7 +1783,9 @@ public class PrimitiveArrayUtil {
 	 * @param array       数组
 	 * @param conjunction 分隔符
 	 * @return 连接后的字符串
+	 * @deprecated 请使用 {@link ArrayUtil#join(Object, CharSequence)}
 	 */
+	@Deprecated
 	public static String join(double[] array, CharSequence conjunction) {
 		if (null == array) {
 			return null;
@@ -2037,7 +2079,6 @@ public class PrimitiveArrayUtil {
 		}
 		int i = Math.max(startIndexInclusive, 0);
 		int j = Math.min(array.length, endIndexExclusive) - 1;
-		long tmp;
 		while (j > i) {
 			swap(array, i, j);
 			j--;
@@ -2072,7 +2113,6 @@ public class PrimitiveArrayUtil {
 		}
 		int i = Math.max(startIndexInclusive, 0);
 		int j = Math.min(array.length, endIndexExclusive) - 1;
-		int tmp;
 		while (j > i) {
 			swap(array, i, j);
 			j--;
@@ -2107,7 +2147,6 @@ public class PrimitiveArrayUtil {
 		}
 		int i = Math.max(startIndexInclusive, 0);
 		int j = Math.min(array.length, endIndexExclusive) - 1;
-		short tmp;
 		while (j > i) {
 			swap(array, i, j);
 			j--;
@@ -2142,7 +2181,6 @@ public class PrimitiveArrayUtil {
 		}
 		int i = Math.max(startIndexInclusive, 0);
 		int j = Math.min(array.length, endIndexExclusive) - 1;
-		char tmp;
 		while (j > i) {
 			swap(array, i, j);
 			j--;
@@ -2177,7 +2215,6 @@ public class PrimitiveArrayUtil {
 		}
 		int i = Math.max(startIndexInclusive, 0);
 		int j = Math.min(array.length, endIndexExclusive) - 1;
-		byte tmp;
 		while (j > i) {
 			swap(array, i, j);
 			j--;
@@ -2212,7 +2249,6 @@ public class PrimitiveArrayUtil {
 		}
 		int i = Math.max(startIndexInclusive, 0);
 		int j = Math.min(array.length, endIndexExclusive) - 1;
-		double tmp;
 		while (j > i) {
 			swap(array, i, j);
 			j--;
@@ -2247,7 +2283,6 @@ public class PrimitiveArrayUtil {
 		}
 		int i = Math.max(startIndexInclusive, 0);
 		int j = Math.min(array.length, endIndexExclusive) - 1;
-		float tmp;
 		while (j > i) {
 			swap(array, i, j);
 			j--;
@@ -2282,7 +2317,6 @@ public class PrimitiveArrayUtil {
 		}
 		int i = Math.max(startIndexInclusive, 0);
 		int j = Math.min(array.length, endIndexExclusive) - 1;
-		boolean tmp;
 		while (j > i) {
 			swap(array, i, j);
 			j--;

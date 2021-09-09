@@ -28,7 +28,6 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.ResourceBundle;
 
 /**
  * JSON工具类
@@ -194,7 +193,15 @@ public class JSONUtil {
 	 * @return JSON
 	 */
 	public static JSON parse(Object obj) {
-		return parse(obj, JSONConfig.create());
+		if(obj instanceof JSON){
+			return (JSON) obj;
+		}
+
+		final JSONConfig config = JSONConfig.create();
+		if(InternalJSONUtil.isOrder(obj)){
+			config.setOrder(true);
+		}
+		return parse(obj, config);
 	}
 
 	/**
@@ -239,29 +246,6 @@ public class JSONUtil {
 		return XML.toJSONObject(xmlStr);
 	}
 
-	/**
-	 * Map转化为JSONObject
-	 *
-	 * @param map {@link Map}
-	 * @return JSONObjec
-	 * @deprecated 请直接使用 {@link #parseObj(Object)}
-	 */
-	@Deprecated
-	public static JSONObject parseFromMap(Map<?, ?> map) {
-		return new JSONObject(map);
-	}
-
-	/**
-	 * ResourceBundle转化为JSONObject
-	 *
-	 * @param bundle ResourceBundle文件
-	 * @return JSONObject
-	 * @deprecated 请直接使用 {@link #parseObj(Object)}
-	 */
-	@Deprecated
-	public static JSONObject parseFromResourceBundle(ResourceBundle bundle) {
-		return new JSONObject(bundle);
-	}
 	// -------------------------------------------------------------------- Pause end
 
 	// -------------------------------------------------------------------- Read start
@@ -675,14 +659,12 @@ public class JSONUtil {
 			return writer;
 		}
 
-		char b; // 前一个字符
 		char c; // 当前字符
 		int len = str.length();
 		if (isWrap) {
 			writer.write('"');
 		}
 		for (int i = 0; i < len; i++) {
-//			b = c;
 			c = str.charAt(i);
 			switch (c) {
 				case '\\':
@@ -690,13 +672,6 @@ public class JSONUtil {
 					writer.write("\\");
 					writer.write(c);
 					break;
-					//此处转义导致输出不和预期一致
-//				case '/':
-//					if (b == '<') {
-//						writer.write('\\');
-//					}
-//					writer.write(c);
-//					break;
 				default:
 					writer.write(escape(c));
 			}

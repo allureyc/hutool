@@ -17,26 +17,28 @@ public interface ExcelSaxReader<T> {
 
 	// sheet r:Id前缀
 	String RID_PREFIX = "rId";
+	// sheet name前缀
+	String SHEET_NAME_PREFIX = "sheetName:";
 
 	/**
 	 * 开始读取Excel
 	 *
 	 * @param file Excel文件
-	 * @param idOrRid Excel中的sheet id或者rid编号，rid必须加rId前缀，例如rId1，如果为-1处理所有编号的sheet
+	 * @param idOrRidOrSheetName Excel中的sheet id或者rid编号或sheet名称，rid必须加rId前缀，例如rId1，如果为-1处理所有编号的sheet
 	 * @return this
 	 * @throws POIException POI异常
 	 */
-	T read(File file, String idOrRid) throws POIException;
+	T read(File file, String idOrRidOrSheetName) throws POIException;
 
 	/**
 	 * 开始读取Excel，读取结束后并不关闭流
 	 *
 	 * @param in Excel流
-	 * @param idOrRid Excel中的sheet id或者rid编号，rid必须加rId前缀，例如rId1，如果为-1处理所有编号的sheet
+	 * @param idOrRidOrSheetName Excel中的sheet id或者rid编号，rid必须加rId前缀，例如rId1，如果为-1处理所有编号的sheet
 	 * @return this
 	 * @throws POIException POI异常
 	 */
-	T read(InputStream in, String idOrRid) throws POIException;
+	T read(InputStream in, String idOrRidOrSheetName) throws POIException;
 
 	/**
 	 * 开始读取Excel，读取所有sheet
@@ -75,24 +77,24 @@ public interface ExcelSaxReader<T> {
 	 * 开始读取Excel
 	 *
 	 * @param path 文件路径
-	 * @param rid Excel中的sheet rid编号，如果为-1处理所有编号的sheet
+	 * @param idOrRidOrSheetName Excel中的sheet id或者rid编号或sheet名称，rid必须加rId前缀，例如rId1，如果为-1处理所有编号的sheet
 	 * @return this
 	 * @throws POIException POI异常
 	 */
-	default T read(String path, int rid) throws POIException {
-		return read(FileUtil.file(path), rid);
+	default T read(String path, int idOrRidOrSheetName) throws POIException {
+		return read(FileUtil.file(path), idOrRidOrSheetName);
 	}
 
 	/**
 	 * 开始读取Excel
 	 *
 	 * @param path 文件路径
-	 * @param rid Excel中的sheet rid编号，如果为-1处理所有编号的sheet
+	 * @param idOrRidOrSheetName Excel中的sheet id或者rid编号或sheet名称，rid必须加rId前缀，例如rId1，如果为-1处理所有编号的sheet
 	 * @return this
 	 * @throws POIException POI异常
 	 */
-	default T read(String path, String rid) throws POIException {
-		return read(FileUtil.file(path), rid);
+	default T read(String path, String idOrRidOrSheetName) throws POIException {
+		return read(FileUtil.file(path), idOrRidOrSheetName);
 	}
 
 	/**

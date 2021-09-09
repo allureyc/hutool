@@ -27,7 +27,11 @@ import java.io.OutputStream;
 import java.util.HashMap;
 
 /**
- * 基于Zxing的二维码工具类
+ * 基于Zxing的二维码工具类，支持：
+ * <ul>
+ *     <li>二维码生成和识别，见{@link BarcodeFormat#QR_CODE}</li>
+ *     <li>条形码生成和识别，见{@link BarcodeFormat#CODE_39}等很多标准格式</li>
+ * </ul>
  *
  * @author looly
  * @since 4.0.2
@@ -78,7 +82,7 @@ public class QrCodeUtil {
 	 * 生成 Base64 编码格式的二维码，以 String 形式表示
 	 *
 	 * <p>
-	 *     输出格式为: data:image/[type];base64,[data]
+	 * 输出格式为: data:image/[type];base64,[data]
 	 * </p>
 	 *
 	 * @param content   内容
@@ -320,7 +324,7 @@ public class QrCodeUtil {
 	// ------------------------------------------------------------------------------------------------------------------- decode
 
 	/**
-	 * 解码二维码图片为文本
+	 * 解码二维码或条形码图片为文本
 	 *
 	 * @param qrCodeInputstream 二维码输入流
 	 * @return 解码文本
@@ -330,7 +334,7 @@ public class QrCodeUtil {
 	}
 
 	/**
-	 * 解码二维码图片为文本
+	 * 解码二维码或条形码图片为文本
 	 *
 	 * @param qrCodeFile 二维码文件
 	 * @return 解码文本
@@ -340,7 +344,7 @@ public class QrCodeUtil {
 	}
 
 	/**
-	 * 将二维码图片解码为文本
+	 * 将二维码或条形码图片解码为文本
 	 *
 	 * @param image {@link Image} 二维码图片
 	 * @return 解码后的文本
@@ -350,7 +354,7 @@ public class QrCodeUtil {
 	}
 
 	/**
-	 * 将二维码图片解码为文本
+	 * 将二维码或条形码图片解码为文本
 	 *
 	 * @param image         {@link Image} 二维码图片
 	 * @param isTryHarder   是否优化精度

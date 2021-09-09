@@ -6,7 +6,6 @@ import cn.hutool.db.dialect.Dialect;
 import cn.hutool.db.dialect.DialectFactory;
 import cn.hutool.db.handler.EntityListHandler;
 import cn.hutool.db.handler.HandleHelper;
-import cn.hutool.db.handler.NumberHandler;
 import cn.hutool.db.handler.PageResultHandler;
 import cn.hutool.db.handler.RsHandler;
 import cn.hutool.db.sql.Condition.LikeType;
@@ -279,16 +278,17 @@ public class SqlConnRunner extends DialectRunner {
 	}
 
 	/**
-	 * 获取查询结果总数，生成类似于 SELECT count(1) from (sql)
+	 * 获取查询结果总数，生成类似于 SELECT count(1) from (sql) as _count
 	 *
 	 * @param conn      数据库连接对象
 	 * @param selectSql 查询语句
+	 * @param params    查询参数
 	 * @return 结果数
 	 * @throws SQLException SQL异常
+	 * @since 5.6.6
 	 */
-	public long count(Connection conn, CharSequence selectSql) throws SQLException {
-		SqlBuilder sqlBuilder = SqlBuilder.of(selectSql).insertPreFragment("SELECT count(1) from(").append(")");
-		return page(conn, sqlBuilder, null, new NumberHandler()).intValue();
+	public long count(Connection conn, CharSequence selectSql, Object... params) throws SQLException {
+		return count(conn, SqlBuilder.of(selectSql).addParams(params));
 	}
 
 	/**
@@ -322,7 +322,7 @@ public class SqlConnRunner extends DialectRunner {
 	 */
 	public PageResult<Entity> page(Connection conn, SqlBuilder sqlBuilder, Page page) throws SQLException {
 		final PageResultHandler pageResultHandler = new PageResultHandler(
-				new PageResult<>(page.getPageNumber(), page.getPageSize(), (int) count(conn, sqlBuilder.build())),
+				new PageResult<>(page.getPageNumber(), page.getPageSize(), (int) count(conn, sqlBuilder)),
 				this.caseInsensitive);
 		return page(conn, sqlBuilder, page, pageResultHandler);
 	}

@@ -1,11 +1,14 @@
 package cn.hutool.extra.mail;
 
 import cn.hutool.core.util.CharsetUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.setting.Setting;
 
 import java.io.Serializable;
 import java.nio.charset.Charset;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -109,6 +112,11 @@ public class MailAccount implements Serializable {
 	 * Socket连接超时值，单位毫秒，缺省值不超时
 	 */
 	private long connectionTimeout;
+
+	/**
+	 * 自定义的其他属性，此自定义属性会覆盖默认属性
+	 */
+	private final Map<String, Object> customProperty = new HashMap<>();
 
 	// -------------------------------------------------------------- Constructor start
 
@@ -468,6 +476,31 @@ public class MailAccount implements Serializable {
 	}
 
 	/**
+	 * 获取自定义属性列表
+	 *
+	 * @return 自定义参数列表
+	 * @since 5.6.4
+	 */
+	public Map<String, Object> getCustomProperty() {
+		return customProperty;
+	}
+
+	/**
+	 * 设置自定义属性，如mail.smtp.ssl.socketFactory
+	 *
+	 * @param key   属性名，空白被忽略
+	 * @param value 属性值， null被忽略
+	 * @return this
+	 * @since 5.6.4
+	 */
+	public MailAccount setCustomProperty(String key, Object value) {
+		if (StrUtil.isNotBlank(key) && ObjectUtil.isNotNull(value)) {
+			this.customProperty.put(key, value);
+		}
+		return this;
+	}
+
+	/**
 	 * 获得SMTP相关信息
 	 *
 	 * @return {@link Properties}
@@ -507,10 +540,13 @@ public class MailAccount implements Serializable {
 			p.put(SOCKET_FACTORY_FALLBACK, String.valueOf(this.socketFactoryFallback));
 			p.put(SOCKET_FACTORY_PORT, String.valueOf(this.socketFactoryPort));
 			// issue#IZN95@Gitee，在Linux下需自定义SSL协议版本
-			if(StrUtil.isNotBlank(this.sslProtocols)){
+			if (StrUtil.isNotBlank(this.sslProtocols)) {
 				p.put(SSL_PROTOCOLS, this.sslProtocols);
 			}
 		}
+
+		// 补充自定义属性，允许自定属性覆盖已经设置的值
+		p.putAll(this.customProperty);
 
 		return p;
 	}

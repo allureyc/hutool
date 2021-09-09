@@ -2,8 +2,6 @@ package cn.hutool.core.collection;
 
 import cn.hutool.core.comparator.PinyinComparator;
 import cn.hutool.core.comparator.PropertyComparator;
-import cn.hutool.core.convert.Convert;
-import cn.hutool.core.lang.Editor;
 import cn.hutool.core.lang.Matcher;
 import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -17,8 +15,15 @@ import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.RandomAccess;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Consumer;
 
+/**
+ * List相关工具类
+ *
+ * @author looly
+ */
 public class ListUtil {
 	/**
 	 * 新建一个空List
@@ -270,6 +275,34 @@ public class ListUtil {
 	}
 
 	/**
+	 * 对指定List进行分页，逐页返回数据
+	 *
+	 * @param <T>              集合元素类型
+	 * @param list             源数据列表
+	 * @param pageSize         每页的条目数
+	 * @param pageListConsumer 单页数据函数式返回
+	 * @since 5.7.10
+	 */
+	public static <T> void page(List<T> list, int pageSize, Consumer<List<T>> pageListConsumer) {
+		if (CollUtil.isEmpty(list) || pageSize <= 0) {
+			return;
+		}
+
+		final int total = list.size();
+		final int totalPage = PageUtil.totalPage(total, pageSize);
+		for (int pageNo = PageUtil.getFirstPageNo(); pageNo < totalPage + PageUtil.getFirstPageNo(); pageNo++) {
+			// 获取当前页在列表中对应的起止序号
+			final int[] startEnd = PageUtil.transToStartEnd(pageNo, pageSize);
+			if (startEnd[1] > total) {
+				startEnd[1] = total;
+			}
+
+			// 返回数据
+			pageListConsumer.accept(sub(list, startEnd[0], startEnd[1]));
+		}
+	}
+
+	/**
 	 * 针对List排序，排序会修改原List
 	 *
 	 * @param <T>  元素类型
@@ -279,6 +312,9 @@ public class ListUtil {
 	 * @see Collections#sort(List, Comparator)
 	 */
 	public static <T> List<T> sort(List<T> list, Comparator<? super T> c) {
+		if(CollUtil.isEmpty(list)){
+			return list;
+		}
 		list.sort(c);
 		return list;
 	}
@@ -329,7 +365,11 @@ public class ListUtil {
 	 * @since 4.0.6
 	 */
 	public static <T> List<T> reverseNew(List<T> list) {
-		final List<T> list2 = ObjectUtil.clone(list);
+		List<T> list2 = ObjectUtil.clone(list);
+		if (null == list2) {
+			// 不支持clone
+			list2 = new ArrayList<>(list);
+		}
 		return reverse(list2);
 	}
 
@@ -420,34 +460,27 @@ public class ListUtil {
 	}
 
 	/**
-	 * 过滤<br>
-	 * 过滤过程通过传入的Editor实现来返回需要的元素内容，这个Editor实现可以实现以下功能：
+	 * 获取匹配规则定义中匹配到元素的最后位置<br>
+	 * 此方法对于某些无序集合的位置信息，以转换为数组后的位置为准。
 	 *
-	 * <pre>
-	 * 1、过滤出需要的对象，如果返回null表示这个元素对象抛弃
-	 * 2、修改元素对象，返回集合中为修改后的对象
-	 * </pre>
-	 *
-	 * @param <T>    集合元素类型
-	 * @param list   集合
-	 * @param editor 编辑器接口
-	 * @return 过滤后的数组
-	 * @since 4.1.8
+	 * @param <T>     元素类型
+	 * @param list    List集合
+	 * @param matcher 匹配器，为空则全部匹配
+	 * @return 最后一个位置
+	 * @since 5.6.6
 	 */
-	public static <T> List<T> filter(List<T> list, Editor<T> editor) {
-		if (null == list || null == editor) {
-			return list;
-		}
-
-		final List<T> list2 = (list instanceof LinkedList) ? new LinkedList<>() : new ArrayList<>(list.size());
-		T modified;
-		for (T t : list) {
-			modified = editor.edit(t);
-			if (null != modified) {
-				list2.add(modified);
+	public static <T> int lastIndexOf(List<T> list, Matcher<T> matcher) {
+		if (null != list) {
+			final int size = list.size();
+			if (size > 0) {
+				for (int i = size - 1; i >= 0; i--) {
+					if (null == matcher || matcher.match(list.get(i))) {
+						return i;
+					}
+				}
 			}
 		}
-		return list2;
+		return -1;
 	}
 
 	/**
@@ -460,17 +493,7 @@ public class ListUtil {
 	 * @since 5.2.5
 	 */
 	public static <T> int[] indexOfAll(List<T> list, Matcher<T> matcher) {
-		final List<Integer> indexList = new ArrayList<>();
-		if (null != list) {
-			int index = 0;
-			for (T t : list) {
-				if (null == matcher || matcher.match(t)) {
-					indexList.add(index);
-				}
-				index++;
-			}
-		}
-		return Convert.convert(int[].class, indexList);
+		return CollUtil.indexOfAll(list, matcher);
 	}
 
 	/**
@@ -489,14 +512,40 @@ public class ListUtil {
 	}
 
 	/**
-	 * 获取一个空List
+	 * 获取一个空List，这个空List不可变
 	 *
 	 * @param <T> 元素类型
 	 * @return 空的List
+	 * @see Collections#emptyList()
 	 * @since 5.2.6
 	 */
 	public static <T> List<T> empty() {
 		return Collections.emptyList();
+	}
+
+	/**
+	 * 通过传入分区长度，将指定列表分区为不同的块，每块区域的长度相同（最后一块可能小于长度）<br>
+	 * 分区是在原List的基础上进行的，返回的分区是不可变的抽象列表，原列表元素变更，分区中元素也会变更。
+	 *
+	 * <p>
+	 * 需要特别注意的是，此方法调用{@link List#subList(int, int)}切分List，
+	 * 此方法返回的是原List的视图，也就是说原List有变更，切分后的结果也会变更。
+	 * </p>
+	 *
+	 * @param <T>  集合元素类型
+	 * @param list 列表
+	 * @param size 每个段的长度
+	 * @return 分段列表
+	 * @since 5.4.5
+	 */
+	public static <T> List<List<T>> partition(List<T> list, int size) {
+		if (CollUtil.isEmpty(list)) {
+			return empty();
+		}
+
+		return (list instanceof RandomAccess)
+				? new RandomAccessPartition<>(list, size)
+				: new Partition<>(list, size);
 	}
 
 	/**
@@ -511,22 +560,37 @@ public class ListUtil {
 	 * @param list 列表
 	 * @param size 每个段的长度
 	 * @return 分段列表
+	 * @see #partition(List, int)
 	 * @since 5.4.5
 	 */
 	public static <T> List<List<T>> split(List<T> list, int size) {
+		return partition(list, size);
+	}
+
+	/**
+	 * 将集合平均分成多个list，返回这个集合的列表
+	 * <p>例：</p>
+	 * <pre>
+	 *     ListUtil.splitAvg(null, 3);	// []
+	 *     ListUtil.splitAvg(Arrays.asList(1, 2, 3, 4), 2);	// [[1, 2], [3, 4]]
+	 *     ListUtil.splitAvg(Arrays.asList(1, 2, 3), 5);	// [[1], [2], [3], [], []]
+	 *     ListUtil.splitAvg(Arrays.asList(1, 2, 3), 2);	// [[1, 2], [3]]
+	 * </pre>
+	 *
+	 * @param <T>   集合元素类型
+	 * @param list  集合
+	 * @param limit 要均分成几个list
+	 * @return 分段列表
+	 * @author lileming
+	 * @since 5.7.10
+	 */
+	public static <T> List<List<T>> splitAvg(List<T> list, int limit) {
 		if (CollUtil.isEmpty(list)) {
-			return Collections.emptyList();
+			return empty();
 		}
 
-		final int listSize = list.size();
-		final List<List<T>> result = new ArrayList<>(listSize / size + 1);
-		int offset = 0;
-		for (int toIdx = size; toIdx <= listSize; offset = toIdx, toIdx += size) {
-			result.add(list.subList(offset, toIdx));
-		}
-		if (offset < listSize) {
-			result.add(list.subList(offset, listSize));
-		}
-		return result;
+		return (list instanceof RandomAccess)
+				? new RandomAccessAvgPartition<>(list, limit)
+				: new AvgPartition<>(list, limit);
 	}
 }

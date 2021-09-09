@@ -1,6 +1,7 @@
 package cn.hutool.core.util;
 
 import cn.hutool.core.convert.Convert;
+import cn.hutool.core.lang.Console;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -45,6 +46,12 @@ public class NumberUtilTest {
 	public void addTest4() {
 		BigDecimal result = NumberUtil.add(new BigDecimal("133"), new BigDecimal("331"));
 		Assert.assertEquals(new BigDecimal("464"), result);
+	}
+
+	@Test
+	public void addBlankTest(){
+		BigDecimal result = NumberUtil.add("123", " ");
+		Assert.assertEquals(new BigDecimal("123"), result);
 	}
 
 	@Test
@@ -161,6 +168,31 @@ public class NumberUtilTest {
 		Assert.assertEquals("299,792,458", format);
 	}
 
+	@Test(expected = IllegalArgumentException.class)
+	public void decimalFormatNaNTest(){
+		Double a = 0D;
+		Double b = 0D;
+
+		Double c = a / b;
+		Console.log(NumberUtil.decimalFormat("#%", c));
+	}
+
+	@Test(expected = IllegalArgumentException.class)
+	public void decimalFormatNaNTest2(){
+		Double a = 0D;
+		Double b = 0D;
+
+		Console.log(NumberUtil.decimalFormat("#%", a / b));
+	}
+
+	@Test
+	public void decimalFormatDoubleTest() {
+		Double c = 467.8101;
+
+		String format = NumberUtil.decimalFormat("0.00", c);
+		Assert.assertEquals("467.81", format);
+	}
+
 	@Test
 	public void decimalFormatMoneyTest() {
 		double c = 299792400.543534534;
@@ -176,12 +208,6 @@ public class NumberUtilTest {
 	@Test
 	public void equalsTest() {
 		Assert.assertTrue(NumberUtil.equals(new BigDecimal("0.00"), BigDecimal.ZERO));
-	}
-
-	@Test
-	public void formatPercentTest() {
-		String str = NumberUtil.formatPercent(0.33543545, 2);
-		Assert.assertEquals("33.54%", str);
 	}
 
 	@Test

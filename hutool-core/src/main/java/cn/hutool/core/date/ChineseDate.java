@@ -5,6 +5,7 @@ import cn.hutool.core.date.chinese.ChineseMonth;
 import cn.hutool.core.date.chinese.GanZhi;
 import cn.hutool.core.date.chinese.LunarFestival;
 import cn.hutool.core.date.chinese.LunarInfo;
+import cn.hutool.core.date.chinese.SolarTerms;
 import cn.hutool.core.util.StrUtil;
 
 import java.util.Calendar;
@@ -35,7 +36,7 @@ public class ChineseDate {
 	private final int gyear;
 	//公历月
 	private final int gmonth;
-	//公里日
+	//公历日
 	private final int gday;
 
 	//是否闰年
@@ -325,6 +326,16 @@ public class ChineseDate {
 			return cyclicalm(gyear, gmonth, gday);
 		}
 		return null;
+	}
+
+
+	/**
+	 * 获得节气
+	 * @return 获得节气
+	 * @since 5.6.3
+	 */
+	public String getTerm() {
+		return SolarTerms.getTerm(gyear, gmonth, gday);
 	}
 
 	/**

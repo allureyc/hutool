@@ -188,6 +188,9 @@ public class BeanCopier<T> implements Copier<T>, Serializable {
 					throw new BeanException(e, "Get value of [{}] error!", prop.getFieldName());
 				}
 			}
+			if(null != copyOptions.propertiesFilter && false == copyOptions.propertiesFilter.test(prop.getField(), value)) {
+				return;
+			}
 			if ((null == value && copyOptions.ignoreNullValue) || bean == value) {
 				// 当允许跳过空时，跳过
 				//值不能为bean本身，防止循环引用，此类也跳过
@@ -234,7 +237,12 @@ public class BeanCopier<T> implements Copier<T>, Serializable {
 				return;
 			}
 
-			final String providerKey = copyOptions.getMappedFieldName(fieldName, true);
+			// 对key做映射，映射后为null的忽略之
+			// 这里 copyOptions.editFieldName() 不能少，否则导致 CopyOptions setFieldNameEditor 失效
+			final String providerKey = copyOptions.editFieldName(copyOptions.getMappedFieldName(fieldName, true));
+			if(null == providerKey){
+				return;
+			}
 			if (false == valueProvider.containsKey(providerKey)) {
 				// 无对应值可提供
 				return;
@@ -245,6 +253,10 @@ public class BeanCopier<T> implements Copier<T>, Serializable {
 
 			// 获取属性值
 			Object value = valueProvider.value(providerKey, fieldType);
+			if(null != copyOptions.propertiesFilter && false == copyOptions.propertiesFilter.test(prop.getField(), value)) {
+				return;
+			}
+
 			if ((null == value && copyOptions.ignoreNullValue) || bean == value) {
 				// 当允许跳过空时，跳过
 				// 值不能为bean本身，防止循环引用

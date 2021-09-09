@@ -3,6 +3,7 @@ package cn.hutool.core.date;
 import cn.hutool.core.date.format.DateParser;
 import cn.hutool.core.date.format.DatePrinter;
 import cn.hutool.core.date.format.FastDateFormat;
+import cn.hutool.core.date.format.GlobalCustomFormat;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -122,7 +123,7 @@ public class DateTime extends Date {
 	 */
 	public DateTime(Date date) {
 		this(
-				date.getTime(),//
+				date,//
 				(date instanceof DateTime) ? ((DateTime) date).timeZone : TimeZone.getDefault()
 		);
 	}
@@ -135,7 +136,7 @@ public class DateTime extends Date {
 	 * @since 4.1.2
 	 */
 	public DateTime(Date date, TimeZone timeZone) {
-		this(date.getTime(), timeZone);
+		this(ObjectUtil.defaultIfNull(date, new Date()).getTime(), timeZone);
 	}
 
 	/**
@@ -212,6 +213,38 @@ public class DateTime extends Date {
 	}
 
 	/**
+	 * 构造格式：<br>
+	 * <ol>
+	 * <li>yyyy-MM-dd HH:mm:ss</li>
+	 * <li>yyyy/MM/dd HH:mm:ss</li>
+	 * <li>yyyy.MM.dd HH:mm:ss</li>
+	 * <li>yyyy年MM月dd日 HH时mm分ss秒</li>
+	 * <li>yyyy-MM-dd</li>
+	 * <li>yyyy/MM/dd</li>
+	 * <li>yyyy.MM.dd</li>
+	 * <li>HH:mm:ss</li>
+	 * <li>HH时mm分ss秒</li>
+	 * <li>yyyy-MM-dd HH:mm</li>
+	 * <li>yyyy-MM-dd HH:mm:ss.SSS</li>
+	 * <li>yyyyMMddHHmmss</li>
+	 * <li>yyyyMMddHHmmssSSS</li>
+	 * <li>yyyyMMdd</li>
+	 * <li>EEE, dd MMM yyyy HH:mm:ss z</li>
+	 * <li>EEE MMM dd HH:mm:ss zzz yyyy</li>
+	 * <li>yyyy-MM-dd'T'HH:mm:ss'Z'</li>
+	 * <li>yyyy-MM-dd'T'HH:mm:ss.SSS'Z'</li>
+	 * <li>yyyy-MM-dd'T'HH:mm:ssZ</li>
+	 * <li>yyyy-MM-dd'T'HH:mm:ss.SSSZ</li>
+	 * </ol>
+	 *
+	 * @param dateStr Date字符串
+	 * @since 5.6.2
+	 */
+	public DateTime(CharSequence dateStr) {
+		this(DateUtil.parse(dateStr));
+	}
+
+	/**
 	 * 构造
 	 *
 	 * @param dateStr Date字符串
@@ -219,7 +252,9 @@ public class DateTime extends Date {
 	 * @see DatePattern
 	 */
 	public DateTime(CharSequence dateStr, String format) {
-		this(dateStr, DateUtil.newSimpleFormat(format));
+		this(GlobalCustomFormat.isCustomFormat(format)
+				? GlobalCustomFormat.parse(dateStr, format)
+				: parse(dateStr, DateUtil.newSimpleFormat(format)));
 	}
 
 	/**
@@ -294,8 +329,7 @@ public class DateTime extends Date {
 		//noinspection MagicConstant
 		cal.add(datePart.getValue(), offset);
 
-		DateTime dt = ObjectUtil.clone(this);
-		return dt.setTimeInternal(cal.getTimeInMillis());
+		return ObjectUtil.clone(this).setTimeInternal(cal.getTimeInMillis());
 	}
 	// -------------------------------------------------------------------- offset end
 
@@ -540,17 +574,6 @@ public class DateTime extends Date {
 	}
 
 	/**
-	 * 获得指定日期的毫秒数部分<br>
-	 *
-	 * @return 毫秒数
-	 * @deprecated 拼写错误，请使用{@link #millisecond()}
-	 */
-	@Deprecated
-	public int millsecond() {
-		return getField(DateField.MILLISECOND);
-	}
-
-	/**
 	 * 是否为上午
 	 *
 	 * @return 是否为上午
@@ -703,8 +726,8 @@ public class DateTime extends Date {
 	 * 当前日期是否在日期指定范围内<br>
 	 * 起始日期和结束日期可以互换
 	 *
-	 * @param beginDate 起始日期
-	 * @param endDate   结束日期
+	 * @param beginDate 起始日期（包含）
+	 * @param endDate   结束日期（包含）
 	 * @return 是否在范围内
 	 * @since 3.0.8
 	 */
