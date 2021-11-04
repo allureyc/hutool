@@ -18,10 +18,10 @@ public class CollStreamUtil {
 
 	/**
 	 * 将collection转化为类型不变的map<br>
-	 * <B>{@code Collection<E>  ---->  Map<T,E>}</B>
+	 * <B>{@code Collection<V>  ---->  Map<K,V>}</B>
 	 *
 	 * @param collection 需要转化的集合
-	 * @param key        E类型转化为T类型的lambda方法
+	 * @param key        V类型转化为K类型的lambda方法
 	 * @param <V>        collection中的泛型
 	 * @param <K>        map中的key类型
 	 * @return 转化后的map
@@ -30,16 +30,16 @@ public class CollStreamUtil {
 		if (CollUtil.isEmpty(collection)) {
 			return Collections.emptyMap();
 		}
-		return collection.stream().collect(Collectors.toMap(key, Function.identity()));
+		return collection.stream().collect(Collectors.toMap(key, Function.identity(), (l, r) -> l));
 	}
 
 	/**
 	 * 将Collection转化为map(value类型与collection的泛型不同)<br>
-	 * <B>{@code Collection<E> -----> Map<T,U>  }</B>
+	 * <B>{@code Collection<E> -----> Map<K,V>  }</B>
 	 *
 	 * @param collection 需要转化的集合
-	 * @param key        E类型转化为T类型的lambda方法
-	 * @param value      E类型转化为U类型的lambda方法
+	 * @param key        E类型转化为K类型的lambda方法
+	 * @param value      E类型转化为V类型的lambda方法
 	 * @param <E>        collection中的泛型
 	 * @param <K>        map中的key类型
 	 * @param <V>        map中的value类型
@@ -49,12 +49,12 @@ public class CollStreamUtil {
 		if (CollUtil.isEmpty(collection)) {
 			return Collections.emptyMap();
 		}
-		return collection.stream().collect(Collectors.toMap(key, value));
+		return collection.stream().collect(Collectors.toMap(key, value, (l, r) -> l));
 	}
 
 	/**
 	 * 将collection按照规则(比如有相同的班级id)分类成map<br>
-	 * <B>{@code Collection<E> -------> Map<T,List<E>> } </B>
+	 * <B>{@code Collection<E> -------> Map<K,List<E>> } </B>
 	 *
 	 * @param collection 需要分类的集合
 	 * @param key        分类的规则
@@ -110,7 +110,7 @@ public class CollStreamUtil {
 		}
 		return collection
 				.stream()
-				.collect(Collectors.groupingBy(key1, Collectors.toMap(key2, Function.identity())));
+				.collect(Collectors.groupingBy(key1, Collectors.toMap(key2, Function.identity(), (l, r) -> l)));
 	}
 
 	/**

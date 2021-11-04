@@ -7,35 +7,30 @@ import cn.hutool.extra.ssh.Sftp;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import java.util.List;
-
 public class FtpTest {
 
 	@Test
 	@Ignore
 	public void cdTest() {
 		Ftp ftp = new Ftp("looly.centos");
-		
+
 		ftp.cd("/file/aaa");
 		Console.log(ftp.pwd());
-		
+
 		IoUtil.close(ftp);
 	}
-	
+
 	@Test
 	@Ignore
 	public void uploadTest() {
-		Ftp ftp = new Ftp("looly.centos");
-		
-		List<String> ls = ftp.ls("/file");
-		Console.log(ls);
-		
-		boolean upload = ftp.upload("/file/aaa", FileUtil.file("E:/qrcodeWithLogo.jpg"));
+		Ftp ftp = new Ftp("localhost");
+
+		boolean upload = ftp.upload("/temp", FileUtil.file("d:/test/test.zip"));
 		Console.log(upload);
-		
+
 		IoUtil.close(ftp);
 	}
-	
+
 	@Test
 	@Ignore
 	public void reconnectIfTimeoutTest() throws InterruptedException {

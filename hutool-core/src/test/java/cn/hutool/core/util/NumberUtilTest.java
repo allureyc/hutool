@@ -283,7 +283,7 @@ public class NumberUtilTest {
 		Assert.assertEquals(1482, v1);
 
 		Number v2 = NumberUtil.parseNumber("1,482.00D");
-		Assert.assertEquals(1482L, v2);
+		Assert.assertEquals(1482L, v2.longValue());
 	}
 
 	@Test
@@ -392,5 +392,12 @@ public class NumberUtilTest {
 		Assert.assertEquals(7, ints.length);
 		final Set<?> set = Convert.convert(Set.class, ints);
 		Assert.assertEquals(7, set.size());
+	}
+
+	@Test
+	public void toPlainNumberTest(){
+		String num = "5344.34234e3";
+		final String s = new BigDecimal(num).toPlainString();
+		Assert.assertEquals("5344342.34", s);
 	}
 }

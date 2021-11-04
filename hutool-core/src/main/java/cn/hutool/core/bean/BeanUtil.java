@@ -80,7 +80,7 @@ public class BeanUtil {
 
 	/**
 	 * 判断是否有Setter方法<br>
-	 * 判定方法是是否存在只有一个参数的setXXX方法
+	 * 判定方法是否存在只有一个参数的setXXX方法
 	 *
 	 * @param clazz 待测试类
 	 * @return 是否为Bean对象
@@ -101,7 +101,7 @@ public class BeanUtil {
 
 	/**
 	 * 判断是否为Bean对象<br>
-	 * 判定方法是是否存在只有一个参数的setXXX方法
+	 * 判定方法是否存在只有无参数的getXXX方法或者isXXX方法
 	 *
 	 * @param clazz 待测试类
 	 * @return 是否为Bean对象
@@ -275,7 +275,7 @@ public class BeanUtil {
 	 * @param fieldNameOrIndex 字段名或序号，序号支持负数
 	 * @return 字段值
 	 */
-		public static Object getFieldValue(Object bean, String fieldNameOrIndex) {
+	public static Object getFieldValue(Object bean, String fieldNameOrIndex) {
 		if (null == bean || null == fieldNameOrIndex) {
 			return null;
 		}
@@ -283,18 +283,18 @@ public class BeanUtil {
 		if (bean instanceof Map) {
 			return ((Map<?, ?>) bean).get(fieldNameOrIndex);
 		} else if (bean instanceof Collection) {
-			try{
+			try {
 				return CollUtil.get((Collection<?>) bean, Integer.parseInt(fieldNameOrIndex));
-			} catch (NumberFormatException e){
+			} catch (NumberFormatException e) {
 				// 非数字，see pr#254@Gitee
-				return CollUtil.map((Collection<?>) bean, (beanEle)-> getFieldValue(beanEle, fieldNameOrIndex), false);
+				return CollUtil.map((Collection<?>) bean, (beanEle) -> getFieldValue(beanEle, fieldNameOrIndex), false);
 			}
 		} else if (ArrayUtil.isArray(bean)) {
-			try{
+			try {
 				return ArrayUtil.get(bean, Integer.parseInt(fieldNameOrIndex));
-			} catch (NumberFormatException e){
+			} catch (NumberFormatException e) {
 				// 非数字，see pr#254@Gitee
-				return ArrayUtil.map(bean, Object.class, (beanEle)-> getFieldValue(beanEle, fieldNameOrIndex));
+				return ArrayUtil.map(bean, Object.class, (beanEle) -> getFieldValue(beanEle, fieldNameOrIndex));
 			}
 		} else {// 普通Bean对象
 			return ReflectUtil.getFieldValue(bean, fieldNameOrIndex);
@@ -302,7 +302,7 @@ public class BeanUtil {
 	}
 
 	/**
-	 * 设置字段值，，通过反射设置字段值，并不调用setXXX方法<br>
+	 * 设置字段值，通过反射设置字段值，并不调用setXXX方法<br>
 	 * 对象同样支持Map类型，fieldNameOrIndex即为key
 	 *
 	 * @param bean             Bean
@@ -329,12 +329,15 @@ public class BeanUtil {
 	 * @param <T>        属性值类型
 	 * @param bean       Bean对象，支持Map、List、Collection、Array
 	 * @param expression 表达式，例如：person.friend[5].name
-	 * @return Bean属性值
+	 * @return Bean属性值，bean为{@code null}或者express为空，返回{@code null}
 	 * @see BeanPath#get(Object)
 	 * @since 3.0.7
 	 */
 	@SuppressWarnings("unchecked")
 	public static <T> T getProperty(Object bean, String expression) {
+		if (null == bean || StrUtil.isBlank(expression)) {
+			return null;
+		}
 		return (T) BeanPath.create(expression).get(bean);
 	}
 
@@ -546,7 +549,7 @@ public class BeanUtil {
 	 * @since 5.2.4
 	 */
 	public static <T> T toBean(Object source, Class<T> clazz, CopyOptions options) {
-		if(null == source){
+		if (null == source) {
 			return null;
 		}
 		final T target = ReflectUtil.newInstanceIfPossible(clazz);
@@ -661,6 +664,32 @@ public class BeanUtil {
 		).copy();
 	}
 
+	/**
+	 * 对象转Map<br>
+	 * 通过自定义{@link CopyOptions} 完成抓换选项，以便实现：
+	 *
+	 * <pre>
+	 * 1. 字段筛选，可以去除不需要的字段
+	 * 2. 字段变换，例如实现驼峰转下划线
+	 * 3. 自定义字段前缀或后缀等等
+	 * 4. 字段值处理
+	 * ...
+	 * </pre>
+	 *
+	 * @param bean        bean对象
+	 * @param targetMap   目标的Map
+	 * @param copyOptions 拷贝选项
+	 * @return Map
+	 * @since 5.7.15
+	 */
+	public static Map<String, Object> beanToMap(Object bean, Map<String, Object> targetMap, CopyOptions copyOptions) {
+		if (null == bean) {
+			return null;
+		}
+
+		return BeanCopier.create(bean, targetMap, copyOptions).copy();
+	}
+
 	// --------------------------------------------------------------------------------------------- copyProperties
 
 	/**
@@ -717,21 +746,21 @@ public class BeanUtil {
 	 * 复制集合中的Bean属性<br>
 	 * 此方法遍历集合中每个Bean，复制其属性后加入一个新的{@link List}中。
 	 *
-	 * @param collection 原Bean集合
-	 * @param targetType 目标Bean类型
+	 * @param collection  原Bean集合
+	 * @param targetType  目标Bean类型
 	 * @param copyOptions 拷贝选项
-	 * @param <T> Bean类型
+	 * @param <T>         Bean类型
 	 * @return 复制后的List
 	 * @since 5.6.4
 	 */
-	public static <T> List<T> copyToList(Collection<?> collection, Class<T> targetType, CopyOptions copyOptions){
-		if(null == collection){
+	public static <T> List<T> copyToList(Collection<?> collection, Class<T> targetType, CopyOptions copyOptions) {
+		if (null == collection) {
 			return null;
 		}
-		if(collection.isEmpty()){
+		if (collection.isEmpty()) {
 			return new ArrayList<>(0);
 		}
-		return collection.stream().map((source)->{
+		return collection.stream().map((source) -> {
 			final T target = ReflectUtil.newInstanceIfPossible(targetType);
 			copyProperties(source, target, copyOptions);
 			return target;
@@ -744,11 +773,11 @@ public class BeanUtil {
 	 *
 	 * @param collection 原Bean集合
 	 * @param targetType 目标Bean类型
-	 * @param <T> Bean类型
+	 * @param <T>        Bean类型
 	 * @return 复制后的List
 	 * @since 5.6.6
 	 */
-	public static <T> List<T> copyToList(Collection<?> collection, Class<T> targetType){
+	public static <T> List<T> copyToList(Collection<?> collection, Class<T> targetType) {
 		return copyToList(collection, targetType, CopyOptions.create());
 	}
 
@@ -764,6 +793,9 @@ public class BeanUtil {
 	 * @since 4.0.6
 	 */
 	public static boolean isMatchName(Object bean, String beanClassName, boolean isSimple) {
+		if (null == bean || StrUtil.isBlank(beanClassName)) {
+			return false;
+		}
 		return ClassUtil.getClassName(bean, isSimple).equals(isSimple ? StrUtil.upperFirst(beanClassName) : beanClassName);
 	}
 
@@ -771,13 +803,13 @@ public class BeanUtil {
 	 * 编辑Bean的字段，static字段不会处理<br>
 	 * 例如需要对指定的字段做判空操作、null转""操作等等。
 	 *
-	 * @param bean bean
+	 * @param bean   bean
 	 * @param editor 编辑器函数
-	 * @param <T> 被编辑的Bean类型
+	 * @param <T>    被编辑的Bean类型
 	 * @return bean
 	 * @since 5.6.4
 	 */
-	public static <T> T edit(T bean, Editor<Field> editor){
+	public static <T> T edit(T bean, Editor<Field> editor) {
 		if (bean == null) {
 			return null;
 		}
@@ -803,7 +835,7 @@ public class BeanUtil {
 	 * @return 处理后的Bean对象
 	 */
 	public static <T> T trimStrFields(T bean, String... ignoreFields) {
-		return edit(bean, (field)->{
+		return edit(bean, (field) -> {
 			if (ignoreFields != null && ArrayUtil.containsIgnoreCase(ignoreFields, field.getName())) {
 				// 不处理忽略的Fields
 				return field;
@@ -844,7 +876,7 @@ public class BeanUtil {
 	 * @return 是否为空，{@code true} - 空 / {@code false} - 非空
 	 * @since 4.1.10
 	 */
-	public static boolean  isEmpty(Object bean, String... ignoreFiledNames) {
+	public static boolean isEmpty(Object bean, String... ignoreFiledNames) {
 		if (null != bean) {
 			for (Field field : ReflectUtil.getFields(bean.getClass())) {
 				if (ModifierUtil.isStatic(field)) {

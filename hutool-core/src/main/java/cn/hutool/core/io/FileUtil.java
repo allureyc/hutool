@@ -99,7 +99,7 @@ public class FileUtil extends PathUtil {
 	}
 
 	/**
-	 * 列出目录文件<br>
+	 * 列出指定路径下的目录和文件<br>
 	 * 给定的绝对路径不能是压缩包中的路径
 	 *
 	 * @param path 目录绝对路径或者相对路径
@@ -1056,7 +1056,7 @@ public class FileUtil extends PathUtil {
 	 * </pre>
 	 *
 	 * @param file        被修改的文件
-	 * @param newName     新的文件名，包括扩展名
+	 * @param newName     新的文件名，可选是否包括扩展名
 	 * @param isRetainExt 是否保留原文件的扩展名，如果保留，则newName不需要加扩展名
 	 * @param isOverride  是否覆盖目标文件
 	 * @return 目标文件
@@ -3057,7 +3057,7 @@ public class FileUtil extends PathUtil {
 	}
 
 	/**
-	 * 将文件写入流中，此方法不会概念比输出流
+	 * 将文件写入流中，此方法不会关闭输出流
 	 *
 	 * @param file 文件
 	 * @param out  流
@@ -3069,7 +3069,7 @@ public class FileUtil extends PathUtil {
 	}
 
 	/**
-	 * 将流的内容写入文件<br>
+	 * 将路径对应文件写入流中，此方法不会关闭输出流
 	 *
 	 * @param fullFilePath 文件绝对路径
 	 * @param out          输出流
@@ -3278,7 +3278,10 @@ public class FileUtil extends PathUtil {
 				parentCanonicalPath = parentFile.getCanonicalPath();
 				canonicalPath = file.getCanonicalPath();
 			} catch (IOException e) {
-				throw new IORuntimeException(e);
+				// issue#I4CWMO@Gitee
+				// getCanonicalPath有时会抛出奇怪的IO异常，此时忽略异常，使用AbsolutePath判断。
+				parentCanonicalPath = parentFile.getAbsolutePath();
+				canonicalPath = file.getAbsolutePath();
 			}
 			if (false == canonicalPath.startsWith(parentCanonicalPath)) {
 				throw new IllegalArgumentException("New file is outside of the parent dir: " + file.getName());

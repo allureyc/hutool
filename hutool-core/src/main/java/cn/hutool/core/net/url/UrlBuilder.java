@@ -129,7 +129,7 @@ public final class UrlBuilder implements Serializable {
 	 */
 	public static UrlBuilder of(String url, Charset charset) {
 		Assert.notBlank(url, "Url must be not blank!");
-		return of(URLUtil.url(url.trim()), charset);
+		return of(URLUtil.url(StrUtil.trim(url)), charset);
 	}
 
 	/**
@@ -156,7 +156,9 @@ public final class UrlBuilder implements Serializable {
 	 * @return UrlBuilder
 	 */
 	public static UrlBuilder of(String scheme, String host, int port, String path, String query, String fragment, Charset charset) {
-		return of(scheme, host, port, UrlPath.of(path, charset), UrlQuery.of(query, charset, false), fragment, charset);
+		return of(scheme, host, port,
+				UrlPath.of(path, charset),
+				UrlQuery.of(query, charset, false), fragment, charset);
 	}
 
 	/**
@@ -417,7 +419,7 @@ public final class UrlBuilder implements Serializable {
 	 * @return 标识符，例如#后边的部分
 	 */
 	public String getFragmentEncoded() {
-		return URLUtil.encodeAll(this.fragment, this.charset);
+		return URLUtil.encodeFragment(this.fragment, this.charset);
 	}
 
 	/**

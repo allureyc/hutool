@@ -81,6 +81,16 @@ public class StrUtilTest {
 		Assert.assertEquals("", split.get(2));
 	}
 
+	@Test(expected = IllegalArgumentException.class)
+	public void splitNullTest() {
+		StrUtil.split(null, '.');
+	}
+
+	@Test(expected = IllegalArgumentException.class)
+	public void splitToArrayNullTest() {
+		StrUtil.splitToArray(null, '.');
+	}
+
 	@Test
 	public void splitToLongTest() {
 		String str = "1,2,3,4, 5";
@@ -550,7 +560,7 @@ public class StrUtilTest {
 	}
 
 	@Test
-	public void startWithTest(){
+	public void startWithTest() {
 		String a = "123";
 		String b = "123";
 
@@ -577,13 +587,13 @@ public class StrUtilTest {
 
 
 	@Test
-	public void isCharEqualsTest(){
+	public void isCharEqualsTest() {
 		String a = "aaaaaaaaa";
 		Assert.assertTrue(StrUtil.isCharEquals(a));
 	}
 
 	@Test
-	public void isNumericTest(){
+	public void isNumericTest() {
 		String a = "2142342422423423";
 		Assert.assertTrue(StrUtil.isNumeric(a));
 	}

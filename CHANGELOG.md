@@ -3,6 +3,113 @@
 
 -------------------------------------------------------------------------------------------------------------
 
+# 5.7.15 (2021-10-21)
+
+### 🐣新特性
+* 【db     】     Db.quietSetAutoCommit增加判空（issue#I4D75B@Gitee）
+* 【core   】     增加RingIndexUtil（pr#438@Gitee）
+* 【core   】     Assert增加checkBetween重载（pr#436@Gitee）
+* 【core   】     ReUtil增加命名分组重载（pr#439@Gitee）
+* 【json   】     toString和writer增加Filter（issue#I4DQNQ@Gitee）
+* 【core   】     ContentType增加build重载（pr#1898@Github）
+* 【bom    】     支持scope=import方式引入（issue#1561@Github）
+* 【core   】     新增Hash接口，HashXXX继承此接口
+* 【core   】     ZipUtil增加append方法（pr#441@Gitee）
+* 【core   】     CollUtil增加重载（issue#I4E9FS@Gitee）
+* 【core   】     CopyOptions新增setFieldValueEditor（issue#I4E08T@Gitee）
+
+### 🐞Bug修复
+* 【core   】     修复CollUtil.isEqualList两个null返回错误问题（issue#1885@Github）
+* 【poi    】     修复ExcelWriter多余调试信息导致的问题（issue#1884@Github）
+* 【poi    】     修复TemporalAccessorUtil.toInstant使用DateTimeFormatter导致问题（issue#1891@Github）
+* 【poi    】     修复sheet.getRow(y)为null导致的问题（issue#1893@Github）
+* 【cache  】     修复LRUCache线程安全问题（issue#1895@Github）
+* 【crypto 】     修复KeyUtil异常信息参数丢失问题（issue#1902@Github）
+* 【core   】     修复StrUtil.split和splittoArray不一致问题（issue#I4ELU5@Github）
+* 【core   】     修复SymmetricCrypto未关闭CipherOutputStream导致的问题（issue#I4EMST@Gitee）
+* 【core   】     修复QueryBuilder对/转义问题（issue#1904@Github）
+
+-------------------------------------------------------------------------------------------------------------
+
+# 5.7.14 (2021-10-09)
+
+### 🐣新特性
+* 【extra  】     修复HttpCookie设置cookies的方法，不符合RFC6265规范问题（issue#I4B70D@Gitee）
+* 【http   】     优化Browser版本正则判断
+* 【setting】     增加YamlUtil
+* 【extra  】     SenvenZExtractor改名为SevenZExtractor，增加getFirst、get方法
+* 【core   】     DateConverter修改返回java.util.Date而非DateTime（issue#I4BOAP@Gitee）
+* 【core   】     增加IterableIter、ComputeIter
+* 【core   】     CsvConfig增加disableComment方法（issue#1842@Github）
+* 【core   】     DateTime构造和DateUtil.parse可选是否宽松模式（issue#1849@Github）
+* 【core   】     TreeBuilder增加部分根节点set方法（issue#1848@Github）
+* 【core   】     优化Base64.isBase64方法：减少一次多余的判断（pr#1860@Github）
+* 【cache  】     优化FIFOCache未设置过期策略时，无需遍历判断过期对象（pr#425@Gitee）
+* 【core   】     增加Opt类（pr#426@Gitee）
+* 【core   】     Week增加of重载，支持DayOfWek（pr#1872@Github）
+* 【poi    】     优化read，避免多次创建CopyOptions（issue#1875@Github）
+* 【core   】     优化CsvReader，实现可控遍历（pr#1873@Github）
+* 【core   】     优化Base64.isBase64判断（pr#1879@Github）
+* 【core   】     新增StrFormatter.formatWith（pr#430@Gitee）
+
+### 🐞Bug修复
+* 【http   】     修复HttpCookie设置cookies的方法，不符合RFC6265规范问题（pr#418@Gitee）
+* 【http   】     修复Extractor中filter无效问题
+* 【json   】     修复JSONGetter.getJSONArray判断null的问题（issue#I4C15H@Gitee）
+* 【db     】     修复Condition没占位符的情况下sql没引号问题（issue#1846@Github）
+* 【cache  】     修复FIFOCache中remove回调无效问题（pr#1856@Github）
+* 【json   】     修复JSONArray.set中，index为0报错问题（issue#1858@Github）
+* 【core   】     修复FileUtil.checkSlip中getCanonicalPath异常引起的问题（issue#1858@Github）
+
+-------------------------------------------------------------------------------------------------------------
+
+# 5.7.13 (2021-09-17)
+
+### 🐣新特性
+* 【core   】     CsvReadConfig增加trimField选项（issue#I49M0C@Gitee）
+* 【http   】     HttpBase增加clearHeaders方法（issue#I49P23@Gitee）
+* 【core   】     CsvWriter的write和writeBeans参数改为Iterable（issue#I49O4S@Gitee）
+* 【core   】     BitStatusUtil添加来源声明（issue#1824@Github）
+* 【core   】     UrlQuery.build增加重载，支持可选是否转义（issue#I4AIX1@Gitee）
+* 【core   】     ListUtil增加swapTo和swapElement方法（pr#416@Gitee）
+* 【poi    】     ExcelWriter支持Hyperlink（issue#I49QAL@Gitee）
+* 
+### 🐞Bug修复
+* 【core   】     修复FuncKey函数无效问题
+* 【core   】     修复ImgUtil.copyImage读取网络URL后宽高报错问题（issue#1821@Github）
+* 【core   】     修复StrJoiner.append配置丢失问题（issue#I49K1L@Gitee）
+* 【core   】     修复EscapeUtil特殊字符的hex长度不足导致的问题（issue#I49JU8@Gitee）
+* 【core   】     修复UrlBuilder对Fragment部分编码问题（issue#I49KAL@Gitee）
+* 【core   】     修复Enum转换的bug（issue#I49VZB@Gitee）
+* 【json   】     修复JSONUtil.parse对于MapWrapper识别问题
+* 【core   】     修复IdcardUtil.isValidCard判断问题（issue#I4AJ8S@Gitee）
+
+-------------------------------------------------------------------------------------------------------------
+
+# 5.7.12 (2021-09-09)
+
+### 🐣新特性
+* 【system 】     OshiUtil增加getCurrentProcess方法
+* 【extra  】     SpringUtil增加getApplicationName、publishEvent方法（issue#I485NZ@Gitee）
+* 【core   】     BeanUtil.getProperty增加判空（issue#I488HA@Gitee）
+* 【core   】     OptionalBean弃用（pr#1182@Github）
+* 【setting】     Setting、Props持有URL改为持有Resource（pr#1182@Github）
+* 【json   】     JSONUtil.toJsonStr增加重载，支持JSONConfig（issue#I48H5L@Gitee）
+* 【crypto 】     SymmetricCrypto增加setMode方法，update采用累加模式（pr#1642@Github）
+* 【core   】     ZipReader支持Filter
+* 【all    】     Sftp、Ftp、HttpDownloader增加download重载，支持避免传输文件损坏（pr#407@Gitee）
+* 【crypto 】     AES修改构造的IvParameterSpec为AlgorithmParameterSpec（issue#1814@Gitee）
+* 【crypto 】     增加FPE、ZUC（issue#1814@Gitee）
+
+### 🐞Bug修复
+* 【core   】     修复ListUtil.split方法越界问题（issue#I48Q0P@Gitee）
+* 【core   】     修复QrCode的isTryHarder、isPureBarcode设置无效问题（issue#1815@Github）
+* 【core   】     修复DatePattern.CHINESE_DATE_FORMATTER错误问题（issue#I48ZE3@Gitee）
+* 【core   】     修复ListUtil.split错误问题
+* 【core   】     修复NumberUtil.parseNumber长数字越界问题（issue#1818@Github）
+
+-------------------------------------------------------------------------------------------------------------
+
 # 5.7.11 (2021-08-31)
 
 ### 🐣新特性

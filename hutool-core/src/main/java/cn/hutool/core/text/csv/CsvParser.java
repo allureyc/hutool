@@ -1,5 +1,6 @@
 package cn.hutool.core.text.csv;
 
+import cn.hutool.core.collection.ComputeIter;
 import cn.hutool.core.io.IORuntimeException;
 import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.map.MapUtil;
@@ -24,7 +25,7 @@ import java.util.Objects;
  *
  * @author Looly
  */
-public final class CsvParser implements Closeable, Serializable {
+public final class CsvParser extends ComputeIter<CsvRow> implements Closeable, Serializable {
 	private static final long serialVersionUID = 1L;
 
 	private static final int DEFAULT_ROW_CAPACITY = 10;
@@ -96,6 +97,11 @@ public final class CsvParser implements Closeable, Serializable {
 			throw new IllegalStateException("No header available - call nextRow() first");
 		}
 		return header.fields;
+	}
+
+	@Override
+	protected CsvRow computeNext() {
+		return nextRow();
 	}
 
 	/**
@@ -234,7 +240,7 @@ public final class CsvParser implements Closeable, Serializable {
 			if(preChar < 0 || preChar == CharUtil.CR || preChar == CharUtil.LF){
 				// 判断行首字符为指定注释字符的注释开始，直到遇到换行符
 				// 行首分两种，1是preChar < 0表示文本开始，2是换行符后紧跟就是下一行的开始
-				if(c == this.config.commentCharacter){
+				if(null != this.config.commentCharacter && c == this.config.commentCharacter){
 					inComment = true;
 				}
 			}
@@ -335,6 +341,10 @@ public final class CsvParser implements Closeable, Serializable {
 
 		field = StrUtil.unWrap(field, textDelimiter);
 		field = StrUtil.replace(field, "" + textDelimiter + textDelimiter, textDelimiter + "");
+		if(this.config.trimField){
+			// issue#I49M0C@Gitee
+			field = StrUtil.trim(field);
+		}
 		currentFields.add(field);
 	}
 

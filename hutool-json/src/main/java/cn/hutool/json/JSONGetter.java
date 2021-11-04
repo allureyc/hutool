@@ -1,6 +1,5 @@
 package cn.hutool.json;
 
-import cn.hutool.core.bean.OptionalBean;
 import cn.hutool.core.convert.Convert;
 import cn.hutool.core.convert.ConvertException;
 import cn.hutool.core.date.DateUtil;
@@ -10,6 +9,7 @@ import cn.hutool.core.util.StrUtil;
 
 import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.Optional;
 
 /**
  * 用于JSON的Getter类，提供各种类型的Getter方法
@@ -34,7 +34,7 @@ public interface JSONGetter<K> extends OptNullBasicTypeFromObjectGetter<K> {
 	 * @return true 无此key或值为{@code null}或{@link JSONNull#NULL}返回{@code false}，其它返回{@code true}
 	 */
 	default boolean isNull(K key) {
-		return JSONNull.NULL.equals(this.getObj(key));
+		return JSONUtil.isNull(this.getObj(key));
 	}
 
 	/**
@@ -69,7 +69,7 @@ public interface JSONGetter<K> extends OptNullBasicTypeFromObjectGetter<K> {
 	 */
 	default JSONArray getJSONArray(K key) {
 		final Object object = this.getObj(key);
-		if (null == object) {
+		if (JSONUtil.isNull(object)) {
 			return null;
 		}
 
@@ -88,7 +88,7 @@ public interface JSONGetter<K> extends OptNullBasicTypeFromObjectGetter<K> {
 	 */
 	default JSONObject getJSONObject(K key) {
 		final Object object = this.getObj(key);
-		if (null == object) {
+		if (JSONUtil.isNull(object)) {
 			return null;
 		}
 
@@ -114,24 +114,27 @@ public interface JSONGetter<K> extends OptNullBasicTypeFromObjectGetter<K> {
 	}
 
 	@Override
-	default Date getDate(K key, Date defaultValue){
+	default Date getDate(K key, Date defaultValue) {
 		// 默认转换
 		final Object obj = getObj(key);
-		if (null == obj) {
+		if (JSONUtil.isNull(obj)) {
 			return defaultValue;
 		}
-		if(obj instanceof Date){
+		if (obj instanceof Date) {
 			return (Date) obj;
 		}
 
-		String format = OptionalBean.ofNullable(getConfig()).getBean(JSONConfig::getDateFormat).get();
-		if(StrUtil.isNotBlank(format)){
-			// 用户指定了日期格式，获取日期属性时使用对应格式
-			final String str = Convert.toStr(obj);
-			if(null == str){
-				return defaultValue;
+		final Optional<String> formatOps = Optional.ofNullable(getConfig()).map(JSONConfig::getDateFormat);
+		if (formatOps.isPresent()) {
+			final String format = formatOps.get();
+			if (StrUtil.isNotBlank(format)) {
+				// 用户指定了日期格式，获取日期属性时使用对应格式
+				final String str = Convert.toStr(obj);
+				if (null == str) {
+					return defaultValue;
+				}
+				return DateUtil.parse(str, format);
 			}
-			return DateUtil.parse(str, format);
 		}
 
 		return Convert.toDate(obj, defaultValue);
@@ -140,29 +143,32 @@ public interface JSONGetter<K> extends OptNullBasicTypeFromObjectGetter<K> {
 	/**
 	 * 获取{@link LocalDateTime}类型值
 	 *
-	 * @param key 键
+	 * @param key          键
 	 * @param defaultValue 默认值
 	 * @return {@link LocalDateTime}
 	 * @since 5.7.7
 	 */
-	default LocalDateTime getLocalDateTime(K key, LocalDateTime defaultValue){
+	default LocalDateTime getLocalDateTime(K key, LocalDateTime defaultValue) {
 		// 默认转换
 		final Object obj = getObj(key);
-		if (null == obj) {
+		if (JSONUtil.isNull(obj)) {
 			return defaultValue;
 		}
-		if(obj instanceof LocalDateTime){
+		if (obj instanceof LocalDateTime) {
 			return (LocalDateTime) obj;
 		}
 
-		String format = OptionalBean.ofNullable(getConfig()).getBean(JSONConfig::getDateFormat).get();
-		if(StrUtil.isNotBlank(format)){
-			// 用户指定了日期格式，获取日期属性时使用对应格式
-			final String str = Convert.toStr(obj);
-			if(null == str){
-				return defaultValue;
+		final Optional<String> formatOps = Optional.ofNullable(getConfig()).map(JSONConfig::getDateFormat);
+		if (formatOps.isPresent()) {
+			final String format = formatOps.get();
+			if (StrUtil.isNotBlank(format)) {
+				// 用户指定了日期格式，获取日期属性时使用对应格式
+				final String str = Convert.toStr(obj);
+				if (null == str) {
+					return defaultValue;
+				}
+				return LocalDateTimeUtil.parse(str, format);
 			}
-			return LocalDateTimeUtil.parse(str, format);
 		}
 
 		return Convert.toLocalDateTime(obj, defaultValue);
@@ -196,7 +202,7 @@ public interface JSONGetter<K> extends OptNullBasicTypeFromObjectGetter<K> {
 	 */
 	default <T> T get(K key, Class<T> type, boolean ignoreError) throws ConvertException {
 		final Object value = this.getObj(key);
-		if (null == value) {
+		if (JSONUtil.isNull(value)) {
 			return null;
 		}
 		return JSONConverter.jsonConvert(type, value, ignoreError);

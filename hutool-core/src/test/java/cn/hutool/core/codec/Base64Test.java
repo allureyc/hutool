@@ -89,4 +89,14 @@ public class Base64Test {
 		final String s = Base64.decodeStr(result, "gbk");
 		Assert.assertEquals(orderDescription, s);
 	}
+
+	@Test
+	public void decodeEmojiTest(){
+		String str = "😄";
+		final String encode = Base64.encode(str);
+//		Console.log(encode);
+
+		final String decodeStr = Base64.decodeStr(encode);
+		Assert.assertEquals(str, decodeStr);
+	}
 }

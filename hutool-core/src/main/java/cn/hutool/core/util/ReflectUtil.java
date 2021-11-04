@@ -188,6 +188,21 @@ public class ReflectUtil {
 		return FIELDS_CACHE.put(beanClass, allFields);
 	}
 
+
+	/**
+	 * 获得一个类中所有满足条件的字段列表，包括其父类中的字段<br>
+	 * 如果子类与父类中存在同名字段，则这两个字段同时存在，子类字段在前，父类字段在后。
+	 *
+	 * @param beanClass   类
+	 * @param fieldFilter field过滤器，过滤掉不需要的field
+	 * @return 字段列表
+	 * @throws SecurityException 安全检查异常
+	 * @since 5.7.14
+	 */
+	public static Field[] getFields(Class<?> beanClass, Filter<Field> fieldFilter) throws SecurityException {
+		return ArrayUtil.filter(getFields(beanClass), fieldFilter);
+	}
+
 	/**
 	 * 获得一个类中所有字段列表，直接反射获取，无缓存<br>
 	 * 如果子类与父类中存在同名字段，则这两个字段同时存在，子类字段在前，父类字段在后。
@@ -917,7 +932,7 @@ public class ReflectUtil {
 			}
 		}
 
-		if(method.isDefault()){
+		if (method.isDefault()) {
 			// 当方法是default方法时，尤其对象是代理对象，需使用句柄方式执行
 			// 代理对象情况下调用method.invoke会导致循环引用执行，最终栈溢出
 			return MethodHandleUtil.invokeSpecial(obj, method, args);

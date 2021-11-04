@@ -7,7 +7,6 @@ import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.io.IORuntimeException;
 import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.lang.Assert;
-import cn.hutool.core.lang.Console;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.CharsetUtil;
 import cn.hutool.core.util.IdUtil;
@@ -16,6 +15,7 @@ import cn.hutool.core.util.URLUtil;
 import cn.hutool.poi.excel.cell.CellLocation;
 import cn.hutool.poi.excel.cell.CellUtil;
 import cn.hutool.poi.excel.style.Align;
+import org.apache.poi.common.usermodel.Hyperlink;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.DataValidation;
@@ -764,7 +764,6 @@ public class ExcelWriter extends ExcelBase<ExcelWriter> {
 		if (null != content) {
 			final Cell cell = getOrCreateCell(firstColumn, firstRow);
 			CellUtil.setCellValue(cell, content, cellStyle);
-			Console.log("{} {} {}", firstColumn, firstRow, cell.getStringCellValue());
 		}
 		return this;
 	}
@@ -947,6 +946,9 @@ public class ExcelWriter extends ExcelBase<ExcelWriter> {
 			} else {
 				rowMap = (Map) rowBean;
 			}
+		} else if (rowBean instanceof Hyperlink) {
+			// Hyperlink当成一个值
+			return writeRow(CollUtil.newArrayList(rowBean), isWriteKeyAsHead);
 		} else if (BeanUtil.isBean(rowBean.getClass())) {
 			if (MapUtil.isEmpty(this.headerAlias)) {
 				rowMap = BeanUtil.beanToMap(rowBean, new LinkedHashMap<>(), false, false);
