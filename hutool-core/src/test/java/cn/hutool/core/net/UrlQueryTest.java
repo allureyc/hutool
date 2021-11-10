@@ -3,6 +3,7 @@ package cn.hutool.core.net;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.net.url.UrlBuilder;
 import cn.hutool.core.net.url.UrlQuery;
+import cn.hutool.core.util.CharsetUtil;
 import cn.hutool.core.util.URLUtil;
 import org.junit.Assert;
 import org.junit.Test;
@@ -62,5 +63,63 @@ public class UrlQueryTest {
 		map.put("password", "123456");
 		query = URLUtil.buildQuery(map, StandardCharsets.UTF_8);
 		Assert.assertEquals("password=123456&username=SSM", query);
+	}
+
+	@Test
+	public void buildHasNullTest() {
+		Map<String, String> map = new LinkedHashMap<>();
+		map.put(null, "SSM");
+		map.put("password", "123456");
+		String query = URLUtil.buildQuery(map, StandardCharsets.UTF_8);
+		Assert.assertEquals("password=123456", query);
+
+		map = new TreeMap<>();
+		map.put("username", "SSM");
+		map.put("password", "");
+		query = URLUtil.buildQuery(map, StandardCharsets.UTF_8);
+		Assert.assertEquals("password=&username=SSM", query);
+
+		map = new TreeMap<>();
+		map.put("username", "SSM");
+		map.put("password", null);
+		query = URLUtil.buildQuery(map, StandardCharsets.UTF_8);
+		Assert.assertEquals("password&username=SSM", query);
+	}
+
+	@Test
+	public void buildSpecialTest() {
+		Map<String, String> map = new LinkedHashMap<>();
+		map.put("key1&", "SSM");
+		map.put("key2", "123456&");
+		String query = URLUtil.buildQuery(map, StandardCharsets.UTF_8);
+		Assert.assertEquals("key1%26=SSM&key2=123456%26", query);
+
+		map = new TreeMap<>();
+		map.put("username=", "SSM");
+		map.put("password", "=");
+		query = URLUtil.buildQuery(map, StandardCharsets.UTF_8);
+		Assert.assertEquals("password==&username%3D=SSM", query);
+	}
+
+	@Test
+	public void plusTest(){
+		// 根据RFC3986，在URL中，+是安全字符，即此符号不转义
+		final String a = UrlQuery.of(MapUtil.of("a+b", "1+2")).build(CharsetUtil.CHARSET_UTF_8);
+		Assert.assertEquals("a+b=1+2", a);
+	}
+
+	@Test
+	public void parsePlusTest(){
+		// 根据RFC3986，在URL中，+是安全字符，即此符号不转义
+		final String a = UrlQuery.of("a+b=1+2", CharsetUtil.CHARSET_UTF_8)
+				.build(CharsetUtil.CHARSET_UTF_8);
+		Assert.assertEquals("a+b=1+2", a);
+	}
+
+	@Test
+	public void spaceTest(){
+		// 根据RFC3986，在URL中，空格编码为"%20"
+		final String a = UrlQuery.of(MapUtil.of("a ", " ")).build(CharsetUtil.CHARSET_UTF_8);
+		Assert.assertEquals("a%20=%20", a);
 	}
 }

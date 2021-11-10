@@ -29,6 +29,7 @@ import cn.hutool.core.util.StrUtil;
 
 import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -48,20 +49,6 @@ public class Opt<T> {
 	 * 一个空的{@code Opt}
 	 */
 	private static final Opt<?> EMPTY = new Opt<>(null);
-
-	/**
-	 * 包裹里实际的元素
-	 */
-	private final T value;
-
-	/**
-	 * {@code Opt}的构造函数
-	 *
-	 * @param value 包裹里的元素
-	 */
-	private Opt(T value) {
-		this.value = value;
-	}
 
 	/**
 	 * 返回一个空的{@code Opt}
@@ -108,6 +95,20 @@ public class Opt<T> {
 	 */
 	public static <T> Opt<T> ofBlankAble(T value) {
 		return StrUtil.isBlankIfStr(value) ? empty() : new Opt<>(value);
+	}
+
+	/**
+	 * 包裹里实际的元素
+	 */
+	private final T value;
+
+	/**
+	 * {@code Opt}的构造函数
+	 *
+	 * @param value 包裹里的元素
+	 */
+	private Opt(T value) {
+		this.value = value;
 	}
 
 	/**
@@ -243,6 +244,28 @@ public class Opt<T> {
 	}
 
 	/**
+	 * 如果包裹里的值存在，就执行传入的操作({@link Function#apply})并返回该操作返回值
+	 * 如果不存在，返回一个空的{@code Opt}
+	 * 和 {@link Opt#map}的区别为 传入的操作返回值必须为 {@link Optional}
+	 *
+	 * @param mapper 值存在时执行的操作
+	 * @param <U>    操作返回值的类型
+	 * @return 如果包裹里的值存在，就执行传入的操作({@link Function#apply})并返回该操作返回值
+	 * 如果不存在，返回一个空的{@code Opt}
+	 * @throws NullPointerException 如果给定的操作为 {@code null}或者给定的操作执行结果为 {@code null}，抛出 {@code NPE}
+	 * @see Optional#flatMap(Function)
+	 * @since 5.7.16
+	 */
+	public <U> Opt<U> flattedMap(Function<? super T, ? extends Optional<? extends U>> mapper) {
+		Objects.requireNonNull(mapper);
+		if (isEmpty()) {
+			return empty();
+		} else {
+			return ofNullable(mapper.apply(value).orElse(null));
+		}
+	}
+
+	/**
 	 * 如果包裹里元素的值存在，就执行对应的操作，并返回本身
 	 * 如果不存在，返回一个空的{@code Opt}
 	 *
@@ -260,6 +283,25 @@ public class Opt<T> {
 		}
 		action.accept(value);
 		return this;
+	}
+
+
+	/**
+	 * 如果包裹里元素的值存在，就执行对应的操作集，并返回本身
+	 * 如果不存在，返回一个空的{@code Opt}
+	 *
+	 * <p>属于 {@link #ifPresent}的链式拓展
+	 * <p>属于 {@link #peek(Consumer)}的动态拓展
+	 *
+	 * @param actions 值存在时执行的操作，动态参数，可传入数组，当数组为一个空数组时并不会抛出 {@code NPE}
+	 * @return this
+	 * @throws NullPointerException 如果值存在，并且传入的操作集中的元素为 {@code null}
+	 * @author VampireAchao
+	 */
+	@SafeVarargs
+	public final Opt<T> peeks(Consumer<T>... actions) throws NullPointerException {
+		// 第三个参数 (opts, opt) -> null其实并不会执行到该函数式接口所以直接返回了个null
+		return Stream.of(actions).reduce(this, Opt<T>::peek, (opts, opt) -> null);
 	}
 
 	/**
@@ -374,6 +416,15 @@ public class Opt<T> {
 		} else {
 			throw exceptionFunction.apply(message);
 		}
+	}
+
+	/**
+	 * 转换为 {@link Optional}对象
+	 * @return {@link Optional}对象
+	 * @since 5.7.16
+	 */
+	public Optional<T> toOptional(){
+		return Optional.ofNullable(this.value);
 	}
 
 	/**

@@ -21,7 +21,7 @@ public class ValidatorTest {
 	}
 
 	@Test
-	public void hasNumberTest() throws Exception {
+	public void hasNumberTest() {
 		String var1 = "";
 		String var2 = "str";
 		String var3 = "180";
@@ -217,5 +217,23 @@ public class ValidatorTest {
 	@Test
 	public void isCarDrivingLicenceTest(){
 		Assert.assertTrue(Validator.isCarDrivingLicence("430101758218"));
+	}
+
+	@Test
+	public void validateIpv4Test(){
+		Validator.validateIpv4("192.168.1.1", "Error ip");
+		Validator.validateIpv4("8.8.8.8", "Error ip");
+		Validator.validateIpv4("0.0.0.0", "Error ip");
+		Validator.validateIpv4("255.255.255.255", "Error ip");
+		Validator.validateIpv4("127.0.0.0", "Error ip");
+	}
+
+	@Test
+	public void isUrlTest(){
+		String content = "https://detail.tmall.com/item.htm?" +
+				"id=639428931841&ali_refid=a3_430582_1006:1152464078:N:Sk5vwkMVsn5O6DcnvicELrFucL21A32m:0af8611e23c1d07697e";
+
+		Assert.assertTrue(Validator.isMatchRegex(Validator.URL, content));
+		Assert.assertTrue(Validator.isMatchRegex(Validator.URL_HTTP, content));
 	}
 }

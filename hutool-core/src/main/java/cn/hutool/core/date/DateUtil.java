@@ -1878,6 +1878,20 @@ public class DateUtil extends CalendarUtil {
 	}
 
 	/**
+	 * 创建日期范围生成器
+	 *
+	 * @param start 起始日期时间
+	 * @param end   结束日期时间
+	 * @param unit  步进单位
+	 * @param step  步进
+	 * @return {@link DateRange}
+	 * @since 5.7.16
+	 */
+	public static List<DateTime> rangeToList(Date start, Date end, final DateField unit, int step) {
+		return CollUtil.newArrayList((Iterable<DateTime>) new DateRange(start, end, unit, step));
+	}
+
+	/**
 	 * 通过生日计算星座
 	 *
 	 * @param month 月，从0开始计数
@@ -2057,6 +2071,32 @@ public class DateUtil extends CalendarUtil {
 		}
 		format.setLenient(false);
 		return format;
+	}
+
+	/**
+	 * 获取时长单位简写
+	 *
+	 * @param unit 单位
+	 * @return 单位简写名称
+	 * @since 5.7.16
+	 */
+	public static String getShotName(TimeUnit unit) {
+		switch (unit) {
+			case NANOSECONDS:
+				return "ns";
+			case MICROSECONDS:
+				return "μs";
+			case MILLISECONDS:
+				return "ms";
+			case SECONDS:
+				return "s";
+			case MINUTES:
+				return "min";
+			case HOURS:
+				return "h";
+			default:
+				return unit.name().toLowerCase();
+		}
 	}
 
 	// ------------------------------------------------------------------------ Private method start
