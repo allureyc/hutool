@@ -3,6 +3,59 @@
 
 -------------------------------------------------------------------------------------------------------------
 
+# 5.7.17 (2021-12-09)
+
+### 🐣新特性
+* 【core   】     增加AsyncUtil（pr#457@Gitee）
+* 【http   】     增加HttpResource（issue#1943@Github）
+* 【http   】     增加BytesBody、FormUrlEncodedBody
+* 【cron   】     TaskTable.remove增加返回值（issue#I4HX3B@Gitee）
+* 【core   】     Tree增加filter、filterNew、cloneTree、hasChild方法（issue#I4HFC6@Gitee）
+* 【poi    】     增加ColumnSheetReader及ExcelReader.readColumn，支持读取某一列
+* 【core   】     IdCardUtil.isValidCard不再自动trim（issue#I4I04O@Gitee）
+* 【core   】     IdCardUtil.isValidCard不再自动trim（issue#I4I04O@Gitee）
+* 【core   】     改进TextFinder，支持限制结束位置及反向查找模式
+* 【core   】     Opt增加部分方法（pr#459@Gitee）
+* 【core   】     增加DefaultCloneable（pr#459@Gitee）
+* 【core   】     CollStreamUtil增加是否并行的重载（pr#467@Gitee）
+* 【core   】     ResourceClassLoader增加缓存（pr#1959@Github）
+* 【crypto 】     增加CipherWrapper，增加setRandom（issue#1958@Github）
+* 【core   】     Opt增加ofTry方法（pr#1956@Github）
+* 【core   】     DateUtil.toIntSecond标记为弃用（issue#I4JHPR@Gitee）
+* 【db     】     Db.executeBatch标记一个重载为弃用（issue#I4JIPH@Gitee）
+* 【core   】     增加CharSequenceUtil.subPreGbk重载（issue#I4JO2E@Gitee）
+* 【core   】     ReflectUtil.getMethod排除桥接方法（pr#1965@Github）
+* 【http   】     completeFileNameFromHeader在使用path为路径时，自动解码（issue#I4K0FS@Gitee）
+* 【core   】     CopyOptions增加override配置（issue#I4JQ1N@Gitee）
+* 【poi    】     SheetRidReader可以获取所有sheet名（issue#I4JA3M@Gitee）
+* 【core   】     AsyncUtil.waitAny增加返回值（pr#473@Gitee）
+* 【core   】     Calculator.compare改为private（issue#1982@Github）
+* 【core   】     NumberUtil增加isOdd、isEven方法（pr#474@Gitee）
+* 【http   】     增加HttpGlobalConfig.setBoundary，删除MultipartBody.BOUNDARY和getContentType（issue#I4KSLY@Gitee）
+* 【core   】     DateTime增加setMinimalDaysInFirstWeek（issue#1988@Github）
+* 【db     】     Db增加query重载，可支持自定义PreparedStatement，从而支持游标（issue#I4JXWN@Gitee）
+* 【cache  】     CacheObj增加getExpiredTime等方法（issue#I4LE80@Gitee）
+* 【extra  】     Ftp增加backToPwd方法（issue#2004@Github）
+* 【core   】     CollStreamUtil修改集合中null处理问题（pr#478@Gitee）
+* 
+### 🐞Bug修复
+* 【core   】     修复FileResource构造fileName参数无效问题（issue#1942@Github）
+* 【cache  】     修复WeakCache键值强关联导致的无法回收问题（issue#1953@Github）
+* 【core   】     修复ZipUtil相对路径父路径获取null问题（issue#1961@Github）
+* 【http   】     修复HttpUtil.normalizeParams未判空导致的问题（issue#1975@Github）
+* 【poi    】     修复读取日期类型的自定义样式单元格时间结果为1899年问题（pr#1977@Github）
+* 【poi    】     修复SoapClient参数未使用问题
+* 【core   】     修复HashUtil.cityHash128参数未使用问题
+* 【core   】     修复DateUtil.formatChineseDate显示问题（issue#I4KK5F@Gitee）
+* 【poi    】     修复CellUtil.setCellValueStyle空导致值无法写入问题（issue#1995@Github）
+* 【poi    】     修复CellUtil.setComment参数设置错误问题
+* 【core   】     修复QueryBuilder解析路径导致的错误（issue#1989@Github）
+* 【core   】     修复DateTime.between中DateUnit无效问题
+* 【poi    】     修复StyleUtil.getFormat非static问题（issue#I4LGNP@Gitee）
+* 【crypto 】     修复SM2.getD返回bytes包含符号位的问题（issue#2001@Github）
+
+-------------------------------------------------------------------------------------------------------------
+
 # 5.7.16 (2021-11-07)
 
 ### 🐣新特性

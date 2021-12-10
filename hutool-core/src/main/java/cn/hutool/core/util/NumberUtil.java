@@ -12,7 +12,6 @@ import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Random;
 import java.util.Set;
 
 /**
@@ -717,6 +716,9 @@ public class NumberUtil {
 	 * @since 3.1.0
 	 */
 	public static BigDecimal div(Number v1, Number v2, int scale, RoundingMode roundingMode) {
+		if(v1 instanceof BigDecimal && v2 instanceof BigDecimal){
+			return div((BigDecimal)v1, (BigDecimal)v2, scale, roundingMode);
+		}
 		return div(v1.toString(), v2.toString(), scale, roundingMode);
 	}
 
@@ -1362,13 +1364,12 @@ public class NumberUtil {
 			throw new UtilException("Size is larger than range between begin and end!");
 		}
 
-		Random ran = new Random();
-		Set<Integer> set = new HashSet<>();
+		Set<Integer> set = new HashSet<>(size, 1);
 		while (set.size() < size) {
-			set.add(begin + ran.nextInt(end - begin));
+			set.add(begin + RandomUtil.randomInt(end - begin));
 		}
 
-		return set.toArray(new Integer[size]);
+		return set.toArray(new Integer[0]);
 	}
 
 	// ------------------------------------------------------------------------------------------- range
@@ -2704,6 +2705,30 @@ public class NumberUtil {
 		}else{
 			return value.doubleValue();
 		}
+	}
+
+	/**
+	 * 检查是否为奇数<br>
+	 *
+	 * @param num 被判断的数值
+	 * @return 是否是奇数
+	 * @author GuoZG
+	 * @since 5.7.17
+	 */
+	public static boolean isOdd(int num) {
+		return (num & 1) == 1;
+	}
+
+	/**
+	 * 检查是否为偶数<br>
+	 *
+	 * @param num 被判断的数值
+	 * @return 是否是偶数
+	 * @author GuoZG
+	 * @since 5.7.17
+	 */
+	public static boolean isEven(int num) {
+		return false == isOdd(num);
 	}
 
 	// ------------------------------------------------------------------------------------------- Private method start

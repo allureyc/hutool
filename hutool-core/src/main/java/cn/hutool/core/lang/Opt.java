@@ -24,9 +24,12 @@
  */
 package cn.hutool.core.lang;
 
+import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.lang.func.Func0;
 import cn.hutool.core.lang.func.VoidFunc0;
 import cn.hutool.core.util.StrUtil;
 
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
@@ -98,9 +101,38 @@ public class Opt<T> {
 	}
 
 	/**
+	 * 返回一个包裹里{@code List}集合可能为空的{@code Opt}，额外判断了集合内元素为空的情况
+	 *
+	 * @param value 传入需要包裹的元素
+	 * @param <T>   包裹里元素的类型
+	 * @return 一个包裹里元素可能为空的 {@code Opt}
+	 * @since 5.7.17
+	 */
+	public static <T> Opt<List<T>> ofEmptyAble(List<T> value) {
+		return CollectionUtil.isEmpty(value) ? empty() : new Opt<>(value);
+	}
+
+	/**
+	 *
+	 * @param supplier 操作
+	 * @param <T>      类型
+	 * @return 操作执行后的值
+	 */
+	public static <T> Opt<T> ofTry(Func0<T> supplier) {
+		try {
+			return Opt.ofNullable(supplier.call());
+		} catch (Exception e) {
+			final Opt<T> empty = Opt.empty();
+			empty.exception = e;
+			return empty;
+		}
+	}
+
+	/**
 	 * 包裹里实际的元素
 	 */
 	private final T value;
+	private Exception exception;
 
 	/**
 	 * {@code Opt}的构造函数
@@ -123,16 +155,7 @@ public class Opt<T> {
 	 * @return 包裹里的元素，有可能为{@code null}
 	 */
 	public T get() {
-		return value;
-	}
-
-	/**
-	 * 判断包裹里元素的值是否存在，存在为 {@code true}，否则为{@code false}
-	 *
-	 * @return 包裹里元素的值存在为 {@code true}，否则为{@code false}
-	 */
-	public boolean isPresent() {
-		return value != null;
+		return this.value;
 	}
 
 	/**
@@ -146,6 +169,37 @@ public class Opt<T> {
 	}
 
 	/**
+	 * 获取异常<br>
+	 * 当调用 {@link #ofTry(Func0)}时，异常信息不会抛出，而是保存，调用此方法获取抛出的异常
+	 *
+	 * @return 异常
+	 * @since 5.7.17
+	 */
+	public Exception getException(){
+		return this.exception;
+	}
+
+	/**
+	 * 是否失败<br>
+	 * 当调用 {@link #ofTry(Func0)}时，抛出异常则表示失败
+	 *
+	 * @return 是否失败
+	 * @since 5.7.17
+	 */
+	public boolean isFail(){
+		return null != this.exception;
+	}
+
+	/**
+	 * 判断包裹里元素的值是否存在，存在为 {@code true}，否则为{@code false}
+	 *
+	 * @return 包裹里元素的值存在为 {@code true}，否则为{@code false}
+	 */
+	public boolean isPresent() {
+		return value != null;
+	}
+
+	/**
 	 * 如果包裹里的值存在，就执行传入的操作({@link Consumer#accept})
 	 *
 	 * <p> 例如如果值存在就打印结果
@@ -154,12 +208,14 @@ public class Opt<T> {
 	 * }</pre>
 	 *
 	 * @param action 你想要执行的操作
+	 * @return this
 	 * @throws NullPointerException 如果包裹里的值存在，但你传入的操作为{@code null}时抛出
 	 */
-	public void ifPresent(Consumer<? super T> action) {
-		if (value != null) {
+	public Opt<T> ifPresent(Consumer<? super T> action) {
+		if (isPresent()) {
 			action.accept(value);
 		}
+		return this;
 	}
 
 	/**
@@ -174,13 +230,41 @@ public class Opt<T> {
 	 *
 	 * @param action      包裹里的值存在时的操作
 	 * @param emptyAction 包裹里的值不存在时的操作
+	 * @return this;
 	 * @throws NullPointerException 如果包裹里的值存在时，执行的操作为 {@code null}, 或者包裹里的值不存在时的操作为 {@code null}，则抛出{@code NPE}
 	 */
-	public void ifPresentOrElse(Consumer<? super T> action, VoidFunc0 emptyAction) {
-		if (value != null) {
+	public Opt<T> ifPresentOrElse(Consumer<? super T> action, VoidFunc0 emptyAction) {
+		if (isPresent()) {
 			action.accept(value);
 		} else {
 			emptyAction.callWithRuntimeException();
+		}
+		return this;
+	}
+
+
+	/**
+	 * 如果包裹里的值存在，就执行传入的值存在时的操作({@link Function#apply(Object)})支持链式调用、转换为其他类型
+	 * 否则执行传入的值不存在时的操作({@link VoidFunc0}中的{@link VoidFunc0#call()})
+	 *
+	 * <p>
+	 * 如果值存在就转换为大写，否则用{@code Console.error}打印另一句字符串
+	 * <pre>{@code
+	 * String hutool = Opt.ofBlankAble("hutool").mapOrElse(String::toUpperCase, () -> Console.log("yes")).mapOrElse(String::intern, () -> Console.log("Value is not present~")).get();
+	 * }</pre>
+	 *
+	 * @param <U> map后新的类型
+	 * @param mapper      包裹里的值存在时的操作
+	 * @param emptyAction 包裹里的值不存在时的操作
+	 * @return 新的类型的Opt
+	 * @throws NullPointerException 如果包裹里的值存在时，执行的操作为 {@code null}, 或者包裹里的值不存在时的操作为 {@code null}，则抛出{@code NPE}
+	 */
+	public <U> Opt<U> mapOrElse(Function<? super T, ? extends U> mapper, VoidFunc0 emptyAction) {
+		if (isPresent()) {
+			return ofNullable(mapper.apply(value));
+		} else {
+			emptyAction.callWithRuntimeException();
+			return empty();
 		}
 	}
 
@@ -349,7 +433,18 @@ public class Opt<T> {
 	 * @return 如果包裹里元素的值存在，则返回该值，否则返回传入的{@code other}
 	 */
 	public T orElse(T other) {
-		return value != null ? value : other;
+		return isPresent() ? value : other;
+	}
+
+	/**
+	 * 异常则返回另一个可选值
+	 *
+	 * @param other 可选值
+	 * @return 如果未发生异常，则返回该值，否则返回传入的{@code other}
+	 * @since 5.7.17
+	 */
+	public T exceptionOrElse(T other){
+		return isFail() ? other : value;
 	}
 
 	/**
@@ -360,7 +455,7 @@ public class Opt<T> {
 	 * @throws NullPointerException 如果之不存在，并且传入的操作为空，则抛出 {@code NPE}
 	 */
 	public T orElseGet(Supplier<? extends T> supplier) {
-		return value != null ? value : supplier.get();
+		return isPresent() ? value : supplier.get();
 	}
 
 	/**
@@ -370,10 +465,7 @@ public class Opt<T> {
 	 * @throws NoSuchElementException 如果包裹里的值不存在则抛出该异常
 	 */
 	public T orElseThrow() {
-		if (value == null) {
-			throw new NoSuchElementException("No value present");
-		}
-		return value;
+		return orElseThrow(NoSuchElementException::new, "No value present");
 	}
 
 	/**
@@ -387,7 +479,7 @@ public class Opt<T> {
 	 * @throws NullPointerException 如果值不存在并且 传入的操作为 {@code null}或者操作执行后的返回值为{@code null}
 	 */
 	public <X extends Throwable> T orElseThrow(Supplier<? extends X> exceptionSupplier) throws X {
-		if (value != null) {
+		if (isPresent()) {
 			return value;
 		} else {
 			throw exceptionSupplier.get();
@@ -411,7 +503,7 @@ public class Opt<T> {
 	 * @author VampireAchao
 	 */
 	public <X extends Throwable> T orElseThrow(Function<String, ? extends X> exceptionFunction, String message) throws X {
-		if (value != null) {
+		if (isPresent()) {
 			return value;
 		} else {
 			throw exceptionFunction.apply(message);
@@ -420,10 +512,11 @@ public class Opt<T> {
 
 	/**
 	 * 转换为 {@link Optional}对象
+	 *
 	 * @return {@link Optional}对象
 	 * @since 5.7.16
 	 */
-	public Optional<T> toOptional(){
+	public Optional<T> toOptional() {
 		return Optional.ofNullable(this.value);
 	}
 
@@ -472,8 +565,6 @@ public class Opt<T> {
 	 */
 	@Override
 	public String toString() {
-		return value != null
-				? value.toString()
-				: null;
+		return StrUtil.toStringOrNull(this.value);
 	}
 }
