@@ -3,12 +3,12 @@ package cn.hutool.core.util;
 import cn.hutool.core.exceptions.UtilException;
 import cn.hutool.core.io.IORuntimeException;
 import cn.hutool.core.io.IoUtil;
+import cn.hutool.core.lang.Pid;
 import cn.hutool.core.text.StrBuilder;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.management.ManagementFactory;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,7 +34,7 @@ public class RuntimeUtil {
 	}
 
 	/**
-	 * 执行系统命令，使用系统默认编码
+	 * 执行系统命令，使用传入的 {@link Charset charset} 编码
 	 *
 	 * @param charset 编码
 	 * @param cmds    命令列表，每个元素代表一条命令
@@ -58,7 +58,7 @@ public class RuntimeUtil {
 	}
 
 	/**
-	 * 执行系统命令，使用系统默认编码
+	 * 执行系统命令，使用传入的 {@link Charset charset} 编码
 	 *
 	 * @param charset 编码
 	 * @param cmds    命令列表，每个元素代表一条命令
@@ -131,7 +131,7 @@ public class RuntimeUtil {
 	}
 
 	/**
-	 * 获取命令执行结果，使用系统默认编码，获取后销毁进程
+	 * 获取命令执行结果，使用传入的 {@link Charset charset} 编码，获取后销毁进程
 	 *
 	 * @param process {@link Process} 进程
 	 * @param charset 编码
@@ -150,7 +150,7 @@ public class RuntimeUtil {
 	}
 
 	/**
-	 * 获取命令执行结果，使用系统默认编码，，获取后销毁进程
+	 * 获取命令执行结果，使用系统默认编码，获取后销毁进程
 	 *
 	 * @param process {@link Process} 进程
 	 * @return 命令执行结果列表
@@ -180,7 +180,7 @@ public class RuntimeUtil {
 	}
 
 	/**
-	 * 获取命令执行异常结果，使用系统默认编码，，获取后销毁进程
+	 * 获取命令执行异常结果，使用系统默认编码，获取后销毁进程
 	 *
 	 * @param process {@link Process} 进程
 	 * @return 命令执行结果列表
@@ -289,16 +289,7 @@ public class RuntimeUtil {
 	 * @since 5.7.3
 	 */
 	public static int getPid() throws UtilException {
-		final String processName = ManagementFactory.getRuntimeMXBean().getName();
-		if (StrUtil.isBlank(processName)) {
-			throw new UtilException("Process name is blank!");
-		}
-		final int atIndex = processName.indexOf('@');
-		if (atIndex > 0) {
-			return Integer.parseInt(processName.substring(0, atIndex));
-		} else {
-			return processName.hashCode();
-		}
+		return Pid.INSTANCE.get();
 	}
 
 	/**

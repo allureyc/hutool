@@ -42,6 +42,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NavigableSet;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.Stack;
@@ -51,6 +52,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.LinkedBlockingDeque;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -1176,19 +1178,9 @@ public class CollUtil {
 			return collection;
 		}
 
-		Collection<T> collection2 = ObjectUtil.clone(collection);
-		if (null == collection2) {
-			// 不支持clone
-			collection2 = create(collection.getClass());
-		}
-		if (isEmpty(collection2)) {
+		final Collection<T> collection2 = create(collection.getClass());
+		if (isEmpty(collection)) {
 			return collection2;
-		}
-		try {
-			collection2.clear();
-		} catch (UnsupportedOperationException e) {
-			// 克隆后的对象不支持清空，说明为不可变集合对象，使用默认的ArrayList保存结果
-			collection2 = new ArrayList<>();
 		}
 
 		T modified;
@@ -1299,7 +1291,9 @@ public class CollUtil {
 	 * @param <E>              集合元素类型
 	 * @param resultCollection 存放移除结果的集合
 	 * @param targetCollection 被操作移除元素的集合
-	 * @param predicate           用于是否移除判断的过滤器
+	 * @param predicate        用于是否移除判断的过滤器
+	 * @return 移除结果的集合
+	 * @since 5.7.17
 	 */
 	public static <T extends Collection<E>, E> T removeWithAddIf(T targetCollection, T resultCollection, Predicate<? super E> predicate) {
 		Objects.requireNonNull(predicate);
@@ -2218,17 +2212,8 @@ public class CollUtil {
 			final List<T> list = ((List<T>) collection);
 			return list.get(index);
 		} else {
-			int i = 0;
-			for (T t : collection) {
-				if (i > index) {
-					break;
-				} else if (i == index) {
-					return t;
-				}
-				i++;
-			}
+			return IterUtil.get(collection.iterator(), index);
 		}
-		return null;
 	}
 
 	/**
@@ -2309,7 +2294,9 @@ public class CollUtil {
 	 * @return 元素类型，当列表为空或元素全部为null时，返回null
 	 * @see IterUtil#getElementType(Iterable)
 	 * @since 3.0.8
+	 * @deprecated 请使用 {@link IterUtil#getElementType(Iterable)}
 	 */
+	@Deprecated
 	public static Class<?> getElementType(Iterable<?> iterable) {
 		return IterUtil.getElementType(iterable);
 	}
@@ -2321,7 +2308,9 @@ public class CollUtil {
 	 * @return 元素类型，当列表为空或元素全部为null时，返回null
 	 * @see IterUtil#getElementType(Iterator)
 	 * @since 3.0.8
+	 * @deprecated 请使用 {@link IterUtil#getElementType(Iterator)}
 	 */
+	@Deprecated
 	public static Class<?> getElementType(Iterator<?> iterator) {
 		return IterUtil.getElementType(iterator);
 	}
@@ -2339,11 +2328,7 @@ public class CollUtil {
 	 */
 	@SuppressWarnings("unchecked")
 	public static <K, V> ArrayList<V> valuesOfKeys(Map<K, V> map, K... keys) {
-		final ArrayList<V> values = new ArrayList<>();
-		for (K k : keys) {
-			values.add(map.get(k));
-		}
-		return values;
+		return MapUtil.valuesOfKeys(map, new ArrayIter<>(keys));
 	}
 
 	/**
@@ -2373,11 +2358,7 @@ public class CollUtil {
 	 * @since 3.0.9
 	 */
 	public static <K, V> ArrayList<V> valuesOfKeys(Map<K, V> map, Iterator<K> keys) {
-		final ArrayList<V> values = new ArrayList<>();
-		while (keys.hasNext()) {
-			values.add(map.get(keys.next()));
-		}
-		return values;
+		return MapUtil.valuesOfKeys(map, keys);
 	}
 
 	// ------------------------------------------------------------------------------------------------- sort
@@ -2925,6 +2906,23 @@ public class CollUtil {
 	 */
 	public static <F, T> Collection<T> trans(Collection<F> collection, Function<? super F, ? extends T> function) {
 		return new TransCollection<>(collection, function);
+	}
+
+	/**
+	 * 使用给定的map将集合中的原素进行属性或者值的重新设定
+	 *
+	 * @param <E>         元素类型
+	 * @param <K>         替换的键
+	 * @param <V>         替换的值
+	 * @param iterable    集合
+	 * @param map         映射集
+	 * @param keyGenerate 映射键生成函数
+	 * @param biConsumer  封装映射到的值函数
+	 * @author nick_wys
+	 * @since 5.7.18
+	 */
+	public static <E, K, V> void setValueByMap(Iterable<E> iterable, Map<K, V> map, Function<E, K> keyGenerate, BiConsumer<E, V> biConsumer) {
+		iterable.forEach(x -> Optional.ofNullable(map.get(keyGenerate.apply(x))).ifPresent(y -> biConsumer.accept(x, y)));
 	}
 
 	// ---------------------------------------------------------------------------------------------- Interface start

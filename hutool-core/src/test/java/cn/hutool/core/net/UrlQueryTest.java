@@ -130,4 +130,18 @@ public class UrlQueryTest {
 		final String a = UrlQuery.of(MapUtil.of("a ", " ")).build(CharsetUtil.CHARSET_UTF_8);
 		Assert.assertEquals("a%20=%20", a);
 	}
+
+	@Test
+	public void parsePercentTest(){
+		String queryStr = "a%2B=ccc";
+		final UrlQuery query = UrlQuery.of(queryStr, null);
+		Assert.assertEquals(queryStr, query.toString());
+	}
+
+	@Test
+	public void parsePercentTest2(){
+		String queryStr = "signature=%2Br1ekUCGjXiu50Y%2Bk0MO4ovulK8%3D";
+		final UrlQuery query = UrlQuery.of(queryStr, null);
+		Assert.assertEquals(queryStr, query.toString());
+	}
 }

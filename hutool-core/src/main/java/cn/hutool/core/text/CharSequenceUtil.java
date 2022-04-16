@@ -22,7 +22,6 @@ import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.text.MessageFormat;
 import java.text.Normalizer;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -695,7 +694,12 @@ public class CharSequenceUtil {
 
 	/**
 	 * 是否以指定字符串开头<br>
-	 * 如果给定的字符串和开头字符串都为null则返回true，否则任意一个值为null返回false
+	 * 如果给定的字符串和开头字符串都为null则返回true，否则任意一个值为null返回false<br>
+	 * <pre>
+	 *     CharSequenceUtil.startWith("123", "123", false, true);   -- false
+	 *     CharSequenceUtil.startWith("ABCDEF", "abc", true, true); -- true
+	 *     CharSequenceUtil.startWith("abc", "abc", true, true);    -- false
+	 * </pre>
 	 *
 	 * @param str          被监测字符串
 	 * @param prefix       开头字符串
@@ -706,18 +710,14 @@ public class CharSequenceUtil {
 	 */
 	public static boolean startWith(CharSequence str, CharSequence prefix, boolean ignoreCase, boolean ignoreEquals) {
 		if (null == str || null == prefix) {
-			if (false == ignoreEquals) {
+			if (ignoreEquals) {
 				return false;
 			}
 			return null == str && null == prefix;
 		}
 
-		boolean isStartWith;
-		if (ignoreCase) {
-			isStartWith = str.toString().toLowerCase().startsWith(prefix.toString().toLowerCase());
-		} else {
-			isStartWith = str.toString().startsWith(prefix.toString());
-		}
+		boolean isStartWith = str.toString()
+				.regionMatches(ignoreCase, 0, prefix.toString(), 0, prefix.length());
 
 		if (isStartWith) {
 			return (false == ignoreEquals) || (false == equals(str, prefix, ignoreCase));
@@ -800,21 +800,42 @@ public class CharSequenceUtil {
 	 * 是否以指定字符串结尾<br>
 	 * 如果给定的字符串和开头字符串都为null则返回true，否则任意一个值为null返回false
 	 *
-	 * @param str          被监测字符串
-	 * @param suffix       结尾字符串
-	 * @param isIgnoreCase 是否忽略大小写
+	 * @param str        被监测字符串
+	 * @param suffix     结尾字符串
+	 * @param ignoreCase 是否忽略大小写
 	 * @return 是否以指定字符串结尾
 	 */
-	public static boolean endWith(CharSequence str, CharSequence suffix, boolean isIgnoreCase) {
+	public static boolean endWith(CharSequence str, CharSequence suffix, boolean ignoreCase) {
+		return endWith(str, suffix, ignoreCase, false);
+	}
+
+	/**
+	 * 是否以指定字符串结尾<br>
+	 * 如果给定的字符串和开头字符串都为null则返回true，否则任意一个值为null返回false
+	 *
+	 * @param str          被监测字符串
+	 * @param suffix       结尾字符串
+	 * @param ignoreCase   是否忽略大小写
+	 * @param ignoreEquals 是否忽略字符串相等的情况
+	 * @return 是否以指定字符串结尾
+	 * @since 5.8.0
+	 */
+	public static boolean endWith(CharSequence str, CharSequence suffix, boolean ignoreCase, boolean ignoreEquals) {
 		if (null == str || null == suffix) {
+			if (ignoreEquals) {
+				return false;
+			}
 			return null == str && null == suffix;
 		}
 
-		if (isIgnoreCase) {
-			return str.toString().toLowerCase().endsWith(suffix.toString().toLowerCase());
-		} else {
-			return str.toString().endsWith(suffix.toString());
+		final int strOffset = str.length() - suffix.length();
+		boolean isEndWith = str.toString()
+				.regionMatches(ignoreCase, strOffset, suffix.toString(), 0, suffix.length());
+
+		if (isEndWith) {
+			return (false == ignoreEquals) || (false == equals(str, suffix, ignoreCase));
 		}
+		return false;
 	}
 
 	/**
@@ -1021,7 +1042,7 @@ public class CharSequenceUtil {
 			// 如果被监测字符串和
 			return null == testStr;
 		}
-		return str.toString().toLowerCase().contains(testStr.toString().toLowerCase());
+		return indexOfIgnoreCase(str, testStr) > -1;
 	}
 
 	/**
@@ -1090,7 +1111,7 @@ public class CharSequenceUtil {
 	/**
 	 * 指定范围内查找指定字符
 	 *
-	 * @param text        字符串
+	 * @param text       字符串
 	 * @param searchChar 被查找的字符
 	 * @param start      起始位置，如果小于0，从0开始查找
 	 * @param end        终止位置，如果超过str.length()则默认查找到字符串末尾
@@ -1207,9 +1228,9 @@ public class CharSequenceUtil {
 	 * 指定范围内查找字符串<br>
 	 * fromIndex 为搜索起始位置，从后往前计数
 	 *
-	 * @param text        字符串
+	 * @param text       字符串
 	 * @param searchStr  需要查找位置的字符串
-	 * @param from  起始位置，从后往前计数
+	 * @param from       起始位置，从后往前计数
 	 * @param ignoreCase 是否忽略大小写
 	 * @return 位置
 	 * @since 3.2.1
@@ -1421,7 +1442,7 @@ public class CharSequenceUtil {
 		}
 
 		final String str2 = str.toString();
-		if (str2.toLowerCase().startsWith(prefix.toString().toLowerCase())) {
+		if (startWithIgnoreCase(str, prefix)) {
 			return subSuf(str2, prefix.length());// 截取后半段
 		}
 		return str2;
@@ -1470,7 +1491,7 @@ public class CharSequenceUtil {
 		}
 
 		final String str2 = str.toString();
-		if (str2.toLowerCase().endsWith(suffix.toString().toLowerCase())) {
+		if (endWithIgnoreCase(str, suffix)) {
 			return subPre(str2, str2.length() - suffix.length());
 		}
 		return str2;
@@ -1803,10 +1824,7 @@ public class CharSequenceUtil {
 	 * @since 5.7.14
 	 */
 	public static <R> List<R> split(CharSequence str, char separator, int limit, boolean ignoreEmpty, Function<String, R> mapping) {
-		if (null == str) {
-			return new ArrayList<>(0);
-		}
-		return StrSplitter.split(str.toString(), separator, limit, ignoreEmpty, mapping);
+		return StrSplitter.split(str, separator, limit, ignoreEmpty, mapping);
 	}
 
 	/**
@@ -1847,11 +1865,8 @@ public class CharSequenceUtil {
 	 * @since 3.2.0
 	 */
 	public static List<String> split(CharSequence str, CharSequence separator, int limit, boolean isTrim, boolean ignoreEmpty) {
-		if (null == str) {
-			return new ArrayList<>(0);
-		}
 		final String separatorStr = (null == separator) ? null : separator.toString();
-		return StrSplitter.split(str.toString(), separatorStr, limit, isTrim, ignoreEmpty);
+		return StrSplitter.split(str, separatorStr, limit, isTrim, ignoreEmpty);
 	}
 
 	/**
@@ -1860,13 +1875,10 @@ public class CharSequenceUtil {
 	 * @param str 字符串
 	 * @param len 每一个小节的长度
 	 * @return 截取后的字符串数组
-	 * @see StrSplitter#splitByLength(String, int)
+	 * @see StrSplitter#splitByLength(CharSequence, int)
 	 */
 	public static String[] split(CharSequence str, int len) {
-		if (null == str) {
-			return new String[]{};
-		}
-		return StrSplitter.splitByLength(str.toString(), len);
+		return StrSplitter.splitByLength(str, len);
 	}
 
 	/**
@@ -2015,9 +2027,9 @@ public class CharSequenceUtil {
 		}
 
 		if (counterOfDoubleByte % 2 != 0) {
-			if(halfUp){
+			if (halfUp) {
 				len += 1;
-			}else{
+			} else {
 				len -= 1;
 			}
 		}
@@ -2346,7 +2358,9 @@ public class CharSequenceUtil {
 			}
 		} else {
 			int suffixIndex;
-			for (String fragment : split) {
+			String fragment;
+			for (int i = 1; i < split.length; i++) {
+				fragment = split[i];
 				suffixIndex = fragment.indexOf(suffix.toString());
 				if (suffixIndex > 0) {
 					result.add(fragment.substring(0, suffixIndex));
@@ -2486,8 +2500,8 @@ public class CharSequenceUtil {
 	 * StrUtil.repeatAndJoin("?", 5, null) = "?????"
 	 * </pre>
 	 *
-	 * @param str         被重复的字符串
-	 * @param count       数量
+	 * @param str       被重复的字符串
+	 * @param count     数量
 	 * @param delimiter 分界符
 	 * @return 连接后的字符串
 	 * @since 4.0.1
@@ -2647,6 +2661,21 @@ public class CharSequenceUtil {
 			return false;
 		}
 		return str.length() > position && c == str.charAt(position);
+	}
+
+	/**
+	 * 截取第一个字串的部分字符，与第二个字符串比较（长度一致），判断截取的子串是否相同<br>
+	 * 任意一个字符串为null返回false
+	 *
+	 * @param str1       第一个字符串
+	 * @param start1     第一个字符串开始的位置
+	 * @param str2       第二个字符串
+	 * @param ignoreCase 是否忽略大小写
+	 * @return 子串是否相同
+	 * @since 3.2.1
+	 */
+	public static boolean isSubEquals(CharSequence str1, int start1, CharSequence str2, boolean ignoreCase) {
+		return isSubEquals(str1, start1, str2, 0, str2.length(), ignoreCase);
 	}
 
 	/**
@@ -3538,6 +3567,11 @@ public class CharSequenceUtil {
 
 		final int strLength = str.length();
 		final int searchStrLength = searchStr.length();
+		if (strLength < searchStrLength) {
+			// issue#I4M16G@Gitee
+			return str(str);
+		}
+
 		if (fromIndex > strLength) {
 			return str(str);
 		} else if (fromIndex < 0) {
@@ -3565,7 +3599,8 @@ public class CharSequenceUtil {
 	}
 
 	/**
-	 * 替换指定字符串的指定区间内字符为固定字符
+	 * 替换指定字符串的指定区间内字符为固定字符<br>
+	 * 此方法使用{@link String#codePoints()}完成拆分替换
 	 *
 	 * @param str          字符串
 	 * @param startInclude 开始位置（包含）
@@ -3578,27 +3613,69 @@ public class CharSequenceUtil {
 		if (isEmpty(str)) {
 			return str(str);
 		}
-		final int strLength = str.length();
+		final String originalStr = str(str);
+		int[] strCodePoints = originalStr.codePoints().toArray();
+		final int strLength = strCodePoints.length;
 		if (startInclude > strLength) {
-			return str(str);
+			return originalStr;
 		}
 		if (endExclude > strLength) {
 			endExclude = strLength;
 		}
 		if (startInclude > endExclude) {
 			// 如果起始位置大于结束位置，不替换
-			return str(str);
+			return originalStr;
 		}
 
-		final char[] chars = new char[strLength];
+		final StringBuilder stringBuilder = new StringBuilder();
 		for (int i = 0; i < strLength; i++) {
 			if (i >= startInclude && i < endExclude) {
-				chars[i] = replacedChar;
+				stringBuilder.append(replacedChar);
 			} else {
-				chars[i] = str.charAt(i);
+				stringBuilder.append(new String(strCodePoints, i, 1));
 			}
 		}
-		return new String(chars);
+		return stringBuilder.toString();
+	}
+
+	/**
+	 * 替换指定字符串的指定区间内字符为指定字符串，字符串只重复一次<br>
+	 * 此方法使用{@link String#codePoints()}完成拆分替换
+	 *
+	 * @param str          字符串
+	 * @param startInclude 开始位置（包含）
+	 * @param endExclude   结束位置（不包含）
+	 * @param replacedStr  被替换的字符串
+	 * @return 替换后的字符串
+	 * @since 3.2.1
+	 */
+	public static String replace(CharSequence str, int startInclude, int endExclude, CharSequence replacedStr) {
+		if (isEmpty(str)) {
+			return str(str);
+		}
+		final String originalStr = str(str);
+		int[] strCodePoints = originalStr.codePoints().toArray();
+		final int strLength = strCodePoints.length;
+		if (startInclude > strLength) {
+			return originalStr;
+		}
+		if (endExclude > strLength) {
+			endExclude = strLength;
+		}
+		if (startInclude > endExclude) {
+			// 如果起始位置大于结束位置，不替换
+			return originalStr;
+		}
+
+		final StringBuilder stringBuilder = new StringBuilder();
+		for (int i = 0; i < startInclude; i++) {
+			stringBuilder.append(new String(strCodePoints, i, 1));
+		}
+		stringBuilder.append(replacedStr);
+		for (int i = endExclude; i < strLength; i++) {
+			stringBuilder.append(new String(strCodePoints, i, 1));
+		}
+		return stringBuilder.toString();
 	}
 
 	/**
@@ -4193,11 +4270,17 @@ public class CharSequenceUtil {
 	 * 将给定字符串，变成 "xxx...xxx" 形式的字符串
 	 *
 	 * <ul>
-	 *     <li>abcdef 5 -》 a...f</li>
-	 *     <li>abcdef 4 -》 a..f</li>
-	 *     <li>abcdef 3 -》 a.f</li>
-	 *     <li>abcdef 2 -》 a.</li>
-	 *     <li>abcdef 1 -》 a</li>
+	 *     <li>abcdefgh  9 -》 abcdefgh</li>
+	 *     <li>abcdefgh  8 -》 abcdefgh</li>
+	 *     <li>abcdefgh  7 -》 ab...gh</li>
+	 *     <li>abcdefgh  6 -》 ab...h</li>
+	 *     <li>abcdefgh  5 -》 a...h</li>
+	 *     <li>abcdefgh  4 -》 a..h</li>
+	 *     <li>abcdefgh  3 -》 a.h</li>
+	 *     <li>abcdefgh  2 -》 a.</li>
+	 *     <li>abcdefgh  1 -》 a</li>
+	 *     <li>abcdefgh  0 -》 abcdefgh</li>
+	 *     <li>abcdefgh -1 -》 abcdefgh</li>
 	 * </ul>
 	 *
 	 * @param str       字符串
@@ -4220,14 +4303,17 @@ public class CharSequenceUtil {
 			case 2:
 				return str.charAt(0) + ".";
 			case 3:
-				return str.charAt(0) + "." + str.charAt(str.length() - 1);
+				return str.charAt(0) + "." + str.charAt(strLength - 1);
+			case 4:
+				return str.charAt(0) + ".." + str.charAt(strLength - 1);
 		}
 
-		final int w = maxLength / 2;
+		final int suffixLength = (maxLength - 3) / 2;
+		final int preLength = suffixLength + (maxLength - 3) % 2; // suffixLength 或 suffixLength + 1
 		final String str2 = str.toString();
 		return format("{}...{}",
-				str2.substring(0, maxLength - w),
-				str2.substring(strLength - w + 3));
+				str2.substring(0, preLength),
+				str2.substring(strLength - suffixLength));
 	}
 
 	/**
@@ -4350,5 +4436,23 @@ public class CharSequenceUtil {
 	 */
 	public static String normalize(CharSequence str) {
 		return Normalizer.normalize(str, Normalizer.Form.NFC);
+	}
+
+	/**
+	 * 在给定字符串末尾填充指定字符，以达到给定长度<br>
+	 * 如果字符串本身的长度大于等于length，返回原字符串
+	 *
+	 * @param str       字符串
+	 * @param fixedChar 补充的字符
+	 * @param length    补充到的长度
+	 * @return 补充后的字符串
+	 * @since 5.8.0
+	 */
+	public static String fixLength(CharSequence str, char fixedChar, int length) {
+		final int fixedLength = length - str.length();
+		if (fixedLength <= 0) {
+			return str.toString();
+		}
+		return str + repeat(fixedChar, fixedLength);
 	}
 }

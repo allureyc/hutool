@@ -150,7 +150,7 @@ public class ZipUtilTest {
 	@Test
 	@Ignore
 	public void zipStreamTest(){
-		//https://github.com/looly/hutool/issues/944
+		//https://github.com/dromara/hutool/issues/944
 		String dir = "d:/test";
 		String zip = "d:/test.zip";
 		try (OutputStream out = new FileOutputStream(zip)){
@@ -185,5 +185,14 @@ public class ZipUtilTest {
 		OutputStream out = FileUtil.getOutputStream(zip);
 		ZipUtil.zip(out, new String[]{"sm1_alias.txt"},
 				new InputStream[]{FileUtil.getInputStream("d:/test/sm4_1.txt")});
+	}
+
+	@Test
+	@Ignore
+	public void zipMultiFileTest(){
+		File[] dd={FileUtil.file("d:\\test\\qr_a.jpg")
+				,FileUtil.file("d:\\test\\qr_b.jpg")};
+
+		ZipUtil.zip(FileUtil.file("d:\\test\\qr.zip"),false,dd);
 	}
 }

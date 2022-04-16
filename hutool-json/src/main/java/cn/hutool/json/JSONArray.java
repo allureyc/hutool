@@ -16,14 +16,13 @@ import cn.hutool.json.serialize.JSONWriter;
 
 import java.io.StringWriter;
 import java.io.Writer;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.RandomAccess;
-
-import static cn.hutool.json.JSONConverter.jsonConvert;
 
 /**
  * JSON数组<br>
@@ -47,7 +46,7 @@ public class JSONArray implements JSON, JSONGetter<Integer>, List<Object>, Rando
 	/**
 	 * 持有原始数据的List
 	 */
-	private final List<Object> rawList;
+	private List<Object> rawList;
 	/**
 	 * 配置项
 	 */
@@ -95,7 +94,7 @@ public class JSONArray implements JSON, JSONGetter<Integer>, List<Object>, Rando
 	 */
 	public JSONArray(int initialCapacity, JSONConfig config) {
 		this.rawList = new ArrayList<>(initialCapacity);
-		this.config = ObjectUtil.defaultIfNull(config, JSONConfig.create());
+		this.config = ObjectUtil.defaultIfNull(config, JSONConfig::create);
 	}
 
 	/**
@@ -198,7 +197,7 @@ public class JSONArray implements JSON, JSONGetter<Integer>, List<Object>, Rando
 		this(DEFAULT_CAPACITY, jsonConfig);
 		init(object);
 	}
-	// -------------------------------------------------------------------------------------------------------------------- Constructor start
+	// -------------------------------------------------------------------------------------------------------------------- Constructor end
 
 	@Override
 	public JSONConfig getConfig() {
@@ -246,7 +245,7 @@ public class JSONArray implements JSON, JSONGetter<Integer>, List<Object>, Rando
 
 	@Override
 	public <T> T getByPath(String expression, Class<T> resultType) {
-		return jsonConvert(resultType, getByPath(expression), true);
+		return JSONConverter.jsonConvert(resultType, getByPath(expression), true);
 	}
 
 	@Override
@@ -291,6 +290,11 @@ public class JSONArray implements JSON, JSONGetter<Integer>, List<Object>, Rando
 	public JSONArray put(int index, Object value) throws JSONException {
 		this.set(index, value);
 		return this;
+	}
+
+	@Override
+	public <T> T toBean(Type type) {
+		return JSON.super.toBean(type, config.isIgnoreError());
 	}
 
 	/**
@@ -580,6 +584,12 @@ public class JSONArray implements JSON, JSONGetter<Integer>, List<Object>, Rando
 		return writer;
 	}
 
+	@Override
+	public Object clone() throws CloneNotSupportedException {
+		final JSONArray clone = (JSONArray) super.clone();
+		clone.rawList = ObjectUtil.clone(this.rawList);
+		return clone;
+	}
 	// ------------------------------------------------------------------------------------------------- Private method start
 
 	/**

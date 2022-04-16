@@ -12,7 +12,7 @@
 	<a target="_blank" href="https://search.maven.org/artifact/cn.hutool/hutool-all">
 		<img src="https://img.shields.io/maven-central/v/cn.hutool/hutool-all.svg?label=Maven%20Central" />
 	</a>
-	<a target="_blank" href="https://license.coscl.org.cn/MulanPSL2/">
+	<a target="_blank" href="http://license.coscl.org.cn/MulanPSL2/index.html">
 		<img src="https://img.shields.io/:license-MulanPSL2-blue.svg" />
 	</a>
 	<a target="_blank" href="https://www.oracle.com/java/technologies/javase/javase-jdk8-downloads.html">
@@ -107,6 +107,8 @@ Hutool的存在就是为了减少代码搜索成本，避免网络上参差不�
 
 [📘中文文档](https://www.hutool.cn/docs/)
 
+[📘中文备用文档](https://plus.hutool.cn/docs/#/)
+
 [📙参考API](https://apidoc.gitee.com/dromara/hutool/)
 
 [🎬视频介绍](https://www.bilibili.com/video/BV1bQ4y1M7d9?p=2)
@@ -129,7 +131,7 @@ Hutool的存在就是为了减少代码搜索成本，避免网络上参差不�
 
 我们提供了印有Hutool Logo的周边商品，欢迎点击购买支持：
 
-👉 [Hutool 周边商店](https://m.tb.cn/h.fVxoBOm?sm=2756b2) 👈
+👉 [Hutool 周边商店](https://market.m.taobao.com/apps/market/content/index.html?wh_weex=true&contentId=331724720170) 👈
 
 -------------------------------------------------------------------------------
 
@@ -142,20 +144,20 @@ Hutool的存在就是为了减少代码搜索成本，避免网络上参差不�
 <dependency>
     <groupId>cn.hutool</groupId>
     <artifactId>hutool-all</artifactId>
-    <version>5.7.17</version>
+    <version>5.8.0.M3</version>
 </dependency>
 ```
 
 ### 🍐Gradle
 ```
-implementation 'cn.hutool:hutool-all:5.7.17'
+implementation 'cn.hutool:hutool-all:5.8.0.M3'
 ```
 
 ### 📥下载jar
 
 点击以下链接，下载`hutool-all-X.X.X.jar`即可：
 
-- [Maven中央库](https://repo1.maven.org/maven2/cn/hutool/hutool-all/5.7.17/)
+- [Maven中央库](https://repo1.maven.org/maven2/cn/hutool/hutool-all/5.8.0.M3/)
 
 > 🔔️注意
 > Hutool 5.x支持JDK8+，对Android平台没有测试，不能保证所有工具类或工具方法可用。
@@ -214,8 +216,6 @@ Hutool欢迎任何人为Hutool添砖加瓦，贡献代码，不过维护者是�
 -------------------------------------------------------------------------------
 
 ## ⭐Star Hutool
-
-[![Giteye chart](https://chart.giteye.net/gitee/dromara/hutool/GMSL7VDA.png)](https://giteye.net/chart/GMSL7VDA)
 
 [![Stargazers over time](https://starchart.cc/dromara/hutool.svg)](https://starchart.cc/dromara/hutool)
 

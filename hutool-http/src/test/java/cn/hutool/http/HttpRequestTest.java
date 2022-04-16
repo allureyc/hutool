@@ -4,6 +4,7 @@ import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.date.TimeInterval;
 import cn.hutool.core.lang.Console;
 import cn.hutool.core.net.SSLProtocols;
+import cn.hutool.core.net.url.UrlBuilder;
 import cn.hutool.core.util.CharsetUtil;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -149,4 +150,58 @@ public class HttpRequestTest {
 		Console.log(execute.body());
 	}
 
+	@Test
+	@Ignore
+	public void followRedirectsTest() {
+		// 从5.7.19开始关闭JDK的自动重定向功能，改为手动重定向
+		// 当有多层重定向时，JDK的重定向会失效，或者说只有最后一个重定向有效，因此改为手动更易控制次数
+		// 此链接有两次重定向，当设置次数为1时，表示最多执行一次重定向，即请求2次
+		String url = "http://api.rosysun.cn/sjtx/?type=2";
+//		String url = "https://api.btstu.cn/sjtx/api.php?lx=b1";
+
+		// 方式1：全局设置
+		HttpGlobalConfig.setMaxRedirectCount(1);
+		HttpResponse execute = HttpRequest.get(url).execute();
+		Console.log(execute.getStatus(), execute.header(Header.LOCATION));
+
+		// 方式2，单独设置
+		execute = HttpRequest.get(url).setMaxRedirectCount(1).execute();
+		Console.log(execute.getStatus(), execute.header(Header.LOCATION));
+	}
+
+	@Test
+	@Ignore
+	public void addInterceptorTest() {
+		HttpUtil.createGet("https://hutool.cn")
+				.addInterceptor(Console::log)
+				.addResponseInterceptor((res)-> Console.log(res.getStatus()))
+				.execute();
+	}
+
+	@Test
+	@Ignore
+	public void addGlobalInterceptorTest() {
+		GlobalInterceptor.INSTANCE.addRequestInterceptor(Console::log);
+		HttpUtil.createGet("https://hutool.cn").execute();
+	}
+
+	@Test
+	@Ignore
+	public void getWithFormTest(){
+		String url = "https://postman-echo.com/get";
+		final Map<String, Object> map = new HashMap<>();
+		map.put("aaa", "application+1@qqq.com");
+		HttpRequest request =HttpUtil.createGet(url).form(map);
+		Console.log(request.execute().body());
+	}
+
+	@Test
+	@Ignore
+	public void urlWithParamIfGetTest(){
+		UrlBuilder urlBuilder = new UrlBuilder();
+		urlBuilder.setScheme("https").setHost("hutool.cn");
+
+		HttpRequest httpRequest = new HttpRequest(urlBuilder);
+		httpRequest.setMethod(Method.GET).execute();
+	}
 }

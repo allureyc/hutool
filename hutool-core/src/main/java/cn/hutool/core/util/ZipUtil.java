@@ -1,5 +1,6 @@
 package cn.hutool.core.util;
 
+import cn.hutool.core.collection.EnumerationIter;
 import cn.hutool.core.compress.Deflate;
 import cn.hutool.core.compress.Gzip;
 import cn.hutool.core.compress.ZipCopyVisitor;
@@ -29,7 +30,6 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.zip.ZipEntry;
@@ -81,6 +81,21 @@ public class ZipUtil {
 		} catch (IOException e) {
 			throw new IORuntimeException(e);
 		}
+	}
+
+	/**
+	 * 获得 {@link ZipOutputStream}
+	 *
+	 * @param out     压缩文件流
+	 * @param charset 编码
+	 * @return {@link ZipOutputStream}
+	 * @since 5.8.0
+	 */
+	public static ZipOutputStream getZipOutputStream(OutputStream out, Charset charset) {
+		if (out instanceof ZipOutputStream) {
+			return (ZipOutputStream) out;
+		}
+		return new ZipOutputStream(out, charset);
 	}
 
 	/**
@@ -370,17 +385,8 @@ public class ZipUtil {
 	 * @since 3.0.9
 	 */
 	public static File zip(File zipFile, String[] paths, InputStream[] ins, Charset charset) throws UtilException {
-		if (ArrayUtil.isEmpty(paths) || ArrayUtil.isEmpty(ins)) {
-			throw new IllegalArgumentException("Paths or ins is empty !");
-		}
-		if (paths.length != ins.length) {
-			throw new IllegalArgumentException("Paths length is not equals to ins length !");
-		}
-
 		try (final ZipWriter zipWriter = ZipWriter.of(zipFile, charset)) {
-			for (int i = 0; i < paths.length; i++) {
-				zipWriter.add(paths[i], ins[i]);
-			}
+			zipWriter.add(paths, ins);
 		}
 
 		return zipFile;
@@ -395,18 +401,7 @@ public class ZipUtil {
 	 * @since 5.5.2
 	 */
 	public static void zip(OutputStream out, String[] paths, InputStream[] ins) {
-		if (ArrayUtil.isEmpty(paths) || ArrayUtil.isEmpty(ins)) {
-			throw new IllegalArgumentException("Paths or ins is empty !");
-		}
-		if (paths.length != ins.length) {
-			throw new IllegalArgumentException("Paths length is not equals to ins length !");
-		}
-
-		try (final ZipWriter zipWriter = ZipWriter.of(out, DEFAULT_CHARSET)) {
-			for (int i = 0; i < paths.length; i++) {
-				zipWriter.add(paths[i], ins[i]);
-			}
-		}
+		zip(getZipOutputStream(out, DEFAULT_CHARSET), paths, ins);
 	}
 
 	/**
@@ -419,17 +414,8 @@ public class ZipUtil {
 	 * @since 5.5.2
 	 */
 	public static void zip(ZipOutputStream zipOutputStream, String[] paths, InputStream[] ins) throws IORuntimeException {
-		if (ArrayUtil.isEmpty(paths) || ArrayUtil.isEmpty(ins)) {
-			throw new IllegalArgumentException("Paths or ins is empty !");
-		}
-		if (paths.length != ins.length) {
-			throw new IllegalArgumentException("Paths length is not equals to ins length !");
-		}
-
 		try (final ZipWriter zipWriter = new ZipWriter(zipOutputStream)) {
-			for (int i = 0; i < paths.length; i++) {
-				zipWriter.add(paths[i], ins[i]);
-			}
+			zipWriter.add(paths, ins);
 		}
 	}
 
@@ -953,7 +939,8 @@ public class ZipUtil {
 	}
 
 	/**
-	 * 获取Zip文件中指定目录下的所有文件，只显示文件，不显示目录
+	 * 获取Zip文件中指定目录下的所有文件，只显示文件，不显示目录<br>
+	 * 此方法并不会关闭{@link ZipFile}。
 	 *
 	 * @param zipFile Zip文件
 	 * @param dir     目录前缀（目录前缀不包含开头的/）
@@ -968,7 +955,7 @@ public class ZipUtil {
 
 		final List<String> fileNames = new ArrayList<>();
 		String name;
-		for (ZipEntry entry : Collections.list(zipFile.entries())) {
+		for (ZipEntry entry : new EnumerationIter<>(zipFile.entries())) {
 			name = entry.getName();
 			if (StrUtil.isEmpty(dir) || name.startsWith(dir)) {
 				final String nameSuffix = StrUtil.removePrefix(name, dir);

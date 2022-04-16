@@ -29,7 +29,7 @@ import cn.hutool.core.lang.func.Func0;
 import cn.hutool.core.lang.func.VoidFunc0;
 import cn.hutool.core.util.StrUtil;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
@@ -103,17 +103,17 @@ public class Opt<T> {
 	/**
 	 * 返回一个包裹里{@code List}集合可能为空的{@code Opt}，额外判断了集合内元素为空的情况
 	 *
-	 * @param value 传入需要包裹的元素
 	 * @param <T>   包裹里元素的类型
+	 * @param <R>   集合值类型
+	 * @param value 传入需要包裹的元素
 	 * @return 一个包裹里元素可能为空的 {@code Opt}
 	 * @since 5.7.17
 	 */
-	public static <T> Opt<List<T>> ofEmptyAble(List<T> value) {
+	public static <T, R extends Collection<T>> Opt<R> ofEmptyAble(R value) {
 		return CollectionUtil.isEmpty(value) ? empty() : new Opt<>(value);
 	}
 
 	/**
-	 *
 	 * @param supplier 操作
 	 * @param <T>      类型
 	 * @return 操作执行后的值
@@ -122,7 +122,7 @@ public class Opt<T> {
 		try {
 			return Opt.ofNullable(supplier.call());
 		} catch (Exception e) {
-			final Opt<T> empty = Opt.empty();
+			final Opt<T> empty = new Opt<>(null);
 			empty.exception = e;
 			return empty;
 		}
@@ -175,7 +175,7 @@ public class Opt<T> {
 	 * @return 异常
 	 * @since 5.7.17
 	 */
-	public Exception getException(){
+	public Exception getException() {
 		return this.exception;
 	}
 
@@ -186,7 +186,7 @@ public class Opt<T> {
 	 * @return 是否失败
 	 * @since 5.7.17
 	 */
-	public boolean isFail(){
+	public boolean isFail() {
 		return null != this.exception;
 	}
 
@@ -253,7 +253,7 @@ public class Opt<T> {
 	 * String hutool = Opt.ofBlankAble("hutool").mapOrElse(String::toUpperCase, () -> Console.log("yes")).mapOrElse(String::intern, () -> Console.log("Value is not present~")).get();
 	 * }</pre>
 	 *
-	 * @param <U> map后新的类型
+	 * @param <U>         map后新的类型
 	 * @param mapper      包裹里的值存在时的操作
 	 * @param emptyAction 包裹里的值不存在时的操作
 	 * @return 新的类型的Opt
@@ -443,7 +443,7 @@ public class Opt<T> {
 	 * @return 如果未发生异常，则返回该值，否则返回传入的{@code other}
 	 * @since 5.7.17
 	 */
-	public T exceptionOrElse(T other){
+	public T exceptionOrElse(T other) {
 		return isFail() ? other : value;
 	}
 

@@ -12,7 +12,7 @@
 	<a target="_blank" href="https://search.maven.org/artifact/cn.hutool/hutool-all">
 		<img src="https://img.shields.io/maven-central/v/cn.hutool/hutool-all.svg?label=Maven%20Central" />
 	</a>
-	<a target="_blank" href="https://license.coscl.org.cn/MulanPSL2/">
+	<a target="_blank" href="http://license.coscl.org.cn/MulanPSL2/index.html">
 		<img src="https://img.shields.io/:license-MulanPSL2-blue.svg" />
 	</a>
 	<a target="_blank" href="https://www.oracle.com/java/technologies/javase/javase-jdk8-downloads.html">
@@ -111,6 +111,8 @@ Each module can be introduced individually, or all modules can be introduced by 
 
 [📘Chinese documentation](https://www.hutool.cn/docs/)
 
+[📘Chinese back-up documentation](https://plus.hutool.cn/docs/#/)
+
 [📙API](https://apidoc.gitee.com/dromara/hutool/)
 
 [🎬Video](https://www.bilibili.com/video/BV1bQ4y1M7d9?p=2)
@@ -131,7 +133,7 @@ If you think Hutool is good, you can donate to buy the author a pack of chili~, 
 
 We provide the T-Shirt and Sweater with Hutool Logo, please visit the shop：
 
-👉 [Hutool Shop](https://m.tb.cn/h.fVxoBOm?sm=2756b2) 👈
+👉 [Hutool Shop](https://market.m.taobao.com/apps/market/content/index.html?wh_weex=true&contentId=331724720170) 👈
 
 -------------------------------------------------------------------------------
 
@@ -142,18 +144,18 @@ We provide the T-Shirt and Sweater with Hutool Logo, please visit the shop：
 <dependency>
     <groupId>cn.hutool</groupId>
     <artifactId>hutool-all</artifactId>
-    <version>5.7.17</version>
+    <version>5.8.0.M3</version>
 </dependency>
 ```
 
 ### 🍐Gradle
 ```
-implementation 'cn.hutool:hutool-all:5.7.17'
+implementation 'cn.hutool:hutool-all:5.8.0.M3'
 ```
 
 ## 📥Download
 
-- [Maven Repo](https://repo1.maven.org/maven2/cn/hutool/hutool-all/5.7.17/)
+- [Maven Repo](https://repo1.maven.org/maven2/cn/hutool/hutool-all/5.8.0.M3/)
 
 > 🔔️note:
 > Hutool 5.x supports JDK8+ and is not tested on Android platforms, and cannot guarantee that all tool classes or tool methods are available.
@@ -204,8 +206,6 @@ Hutool welcomes anyone to contribute code to Hutool, but the author suffers from
 -------------------------------------------------------------------------------
 
 ## ⭐Star Hutool
-
-[![Giteye chart](https://chart.giteye.net/gitee/dromara/hutool/GMSL7VDA.png)](https://giteye.net/chart/GMSL7VDA)
 
 [![Stargazers over time](https://starchart.cc/dromara/hutool.svg)](https://starchart.cc/dromara/hutool)
 
